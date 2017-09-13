@@ -9,9 +9,11 @@
 	<title> example </title>
 	<meta charset="utf-8" />
 </head>
-<body> </body>
+<body>	
+	 	<input type="text" size="500" id="debug" value="Debug: " > <br /> 
+</body>
 
-<script src="three.min.86.js"></script>
+<script src="three.min.87.js"></script>
 <script src="OrbitControls.js"></script>
 <script src="THREEx.WindowResize.js"></script>
 <script src="THREEp.js"></script>
@@ -19,7 +21,7 @@
 <script>
 
 'use strict'
-
+	
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 200000 );
 camera.position.set( 0, 0, 100 );
@@ -38,7 +40,8 @@ var time;	// for animate .morphVertices( time ) and .morphFaces( time ) )
 // material
 var uvTex			= new THREE.TextureLoader().load( "uvgrid01.png" );
 var waterlilyTex	= new THREE.TextureLoader().load( "waterlily.png" );
-	
+var note2Tex	= new THREE.TextureLoader().load( "note2.jpg" );
+
 var side =  THREE.DoubleSide;
 
 var materials = [
@@ -50,30 +53,36 @@ var materials = [
 	
 ];
 
-//var material = new THREE.MeshBasicMaterial( { map: uvTex, side: side, wireframe: true} );	
+var material = new THREE.MeshBasicMaterial( { map: uvTex, side: side, wireframe: false } );
+// var material = new THREE.MeshPhongMaterial( { side: side, wireframe: true } );
 
-var material = new THREE.MeshPhongMaterial( { side: side, wireframe: true } );
-material.emissive.setRGB(0.52, 0.0, 0.82);
-material.specular.setRGB(0.45, 0.0, 0.75);
-material.shading = THREE.SmoothShading;
 
+/*
+// tooth
+
+	bottomCircle: 1,
+	withBottom: true,
+	rPhiTheta: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
+	stretchNorth:	function ( u, v, t ) { return  0.6 },
+	stretchSouth:	function ( u, v, t ) { return  2 + Math.cos( 6.28 * u ) + v * v * Math.sin( 6.28 * v ) },
+*/
+	
 // geometry
 var parameters = {
 
-	radius:			20,
-	wedges:			6,
-	bottomCircle:	0,		
-	equator:		18,
-	topCircle: 		36,
-	equatorGap: 	0,
-	//rPhiTheta: function( u, v, t ) { return  1.2 + Math.sin( Math.PI * u )+ Math.sqrt( 0.2 + v ) * Math.sin( 3.14 * v * v + t) },
-	//rPhiTheta: function( u, v, t ) { return 1.2 + Math.sin( t ) },
-	//rPhiTheta: function( u, v, t ) { return 0.25 *( 2 + v * v  +  Math.sin( 4 * Math.PI * u ) + Math.sin( t ) ) },
-	//rPhiTheta: function( u, v, t ) { return 0.25 + u * u + Math.sqrt(Math.abs( u - 0.5 )) },
-	//rPhiTheta: function( u, v, t ) { return Math.exp(  Math.sin( 3.7 * Math.PI * v ) ) },
-	//rPhiTheta: function( u, v, t ) { return 1/ ( 1 + 0.75 * Math.sin( 2 * Math.PI * u ) +  Math.exp( -v ) ) },
-	rPhiTheta: function( u, v, t ) { return 1/ ( 1 + Math.exp( 12 * ( 0.5 - v ) * ( 0.5 - v ) ) ) },
-	
+equator: 4,
+
+equatorGap: function( u, t ) { return  0.5 *( 1 + Math.cos( 6.28 * u)) *( 0.5 -  u )*( 0.5 -  u ) * ( 1 + Math.sin( t ) ) },
+stretchSouth: function ( u, v, t ) { return  ( 1 + Math.cos( 6.28 * u)) *( 0.5 -  u )*( 0.5 -  u ) * ( 1 + Math.sin( t ) ) },
+wedges: 11,
+usedWedges: 8,
+
+topCircle: 7,
+withTop: true,
+
+bottomCircle: 3,
+withBottom: true,
+
 }
 
 var geometry = new THREE.BufferGeometry();
@@ -81,12 +90,14 @@ geometry.createMorphGeometry = THREEp.createMorphGeometry; // insert the methode
 geometry.createMorphGeometry( parameters ); // apply the methode
 
 // mesh
-//var mesh = new THREE.Mesh( geometry, material );
-var mesh = new THREE.Mesh( geometry, materials );
+var mesh = new THREE.Mesh( geometry, material );
+//var mesh = new THREE.Mesh( geometry, materials );
 scene.add( mesh );
 
-//var vertexNumbersHelperSphere = new THREEp.vertexNumbersHelper( mesh, 2.5, 0x00aa00);
-//vertexNumbersHelperSphere.update();
+var vertexNumbersHelperSphere = new THREEp.vertexNumbersHelper( mesh, 1, 0x00aa00);
+vertexNumbersHelperSphere.update();
+
+//geometry.morphVertices();
 
 animate();
 
@@ -99,9 +110,9 @@ function animate() {
 	time = clock.getElapsedTime();
 	
 	geometry.morphVertices( time );			
- 	geometry.morphFaces( time );
+ 	//geometry.morphFaces( time );
 	
-	//vertexNumbersHelperSphere.update();
+	vertexNumbersHelperSphere.update();
 	
 	renderer.render( scene, camera );
 	controls.update();
