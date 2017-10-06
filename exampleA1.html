@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<!--   *** example ***
+/**
+ * @author hofk / http://threejs.hofk.de/
+*/
+-->
+<html lang="de">
+<head>
+	<title> example </title>
+	<meta charset="utf-8" />
+</head>
+<body> </body>
+
+<script src="three.min.87.js"></script>
+<script src="OrbitControls.js"></script>
+<script src="THREEx.WindowResize.js"></script>
+<script src="THREEp.js"></script>
+
+<script>
+'use strict'
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 200000 );
+camera.position.set( 0, 0, 100 );
+var renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0xeeeeee, 1 );	
+var container = document.createElement( 'div' );
+document.body.appendChild( container );
+container.appendChild( renderer.domElement ); 
+THREEx.WindowResize( renderer, camera );
+var controls = new THREE.OrbitControls( camera, renderer.domElement );
+controls.enableZoom = true;
+var clock  = new THREE.Clock( true );	
+var time;	// for animate .morphVertices( time ) and .morphFaces( time ) )
+
+// material
+var uvTex			= new THREE.TextureLoader().load( "uvgrid01.png" );
+var waterlilyTex	= new THREE.TextureLoader().load( "waterlily.png" );
+	
+var side =  THREE.DoubleSide;
+
+var materials = [
+	
+	new THREE.MeshBasicMaterial( { transparent: true, opacity: 0.15, side: side	} ), // transparent
+	new THREE.MeshBasicMaterial( { map: uvTex, 			side: side	} ),
+	new THREE.MeshBasicMaterial( { map: waterlilyTex,	side: side	} ),
+	
+	
+];
+var material = new THREE.MeshBasicMaterial( { map: uvTex, side: side, wireframe: false } );	
+
+/*
+var material = new THREE.MeshPhongMaterial( { side: side, wireframe: true } );
+material.emissive.setRGB(0.52, 0.0, 0.82);
+material.specular.setRGB(0.45, 0.0, 0.75);
+
+*/
+
+// geometry
+var parameters = {
+
+// tooth
+	bottomCircle: 1,
+	withBottom: true,
+	rPhiTheta: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
+	stretchNorth:	function ( u, v, t ) { return  0.6 },
+	stretchSouth:	function ( u, v, t ) { return  2 + Math.cos( 6.28 * u ) + v * v * Math.sin( 6.28 * v ) },
+	
+}
+
+var geometry = new THREE.BufferGeometry();
+geometry.createMorphGeometry = THREEp.createMorphGeometry; // insert the methode from THREEp.js
+geometry.createMorphGeometry( parameters ); // apply the methode
+
+// mesh
+var mesh = new THREE.Mesh( geometry, material );
+//var mesh = new THREE.Mesh( geometry, materials );
+
+scene.add( mesh );
+var vertexFaceNumbersHelperSphere = new THREEp.vertexFaceNumbersHelper( mesh, 2, 0.4, 0x00aa00);
+vertexFaceNumbersHelperSphere.update( 2 ); // mode 2 face
+
+//geometry.morphVertices();
+
+animate();
+//..................
+function animate() {
+	requestAnimationFrame( animate );
+	
+	time = clock.getElapsedTime();
+	
+	//geometry.morphVertices( time );			
+ 	//geometry.morphFaces( time );
+	
+	vertexFaceNumbersHelperSphere.update( 2 );
+	
+	renderer.render( scene, camera );
+	controls.update();
+	
+}
+</script>
+
+</html>
