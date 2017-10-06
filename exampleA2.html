@@ -19,7 +19,6 @@
 <script src="THREEp.js"></script>
 
 <script>
-
 'use strict'
 	
 var scene = new THREE.Scene();
@@ -36,14 +35,11 @@ var controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.enableZoom = true;
 var clock  = new THREE.Clock( true );	
 var time;	// for animate .morphVertices( time ) and .morphFaces( time ) )
-
 // material
 var uvTex			= new THREE.TextureLoader().load( "uvgrid01.png" );
 var waterlilyTex	= new THREE.TextureLoader().load( "waterlily.png" );
 var note2Tex	= new THREE.TextureLoader().load( "note2.jpg" );
-
 var side =  THREE.DoubleSide;
-
 var materials = [
 	
 	new THREE.MeshBasicMaterial( { transparent: true, opacity: 0.15, side: side	} ), // transparent
@@ -52,14 +48,10 @@ var materials = [
 	
 	
 ];
-
 var material = new THREE.MeshBasicMaterial( { map: uvTex, side: side, wireframe: false } );
 // var material = new THREE.MeshPhongMaterial( { side: side, wireframe: true } );
-
-
 /*
 // tooth
-
 	bottomCircle: 1,
 	withBottom: true,
 	rPhiTheta: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
@@ -69,42 +61,29 @@ var material = new THREE.MeshBasicMaterial( { map: uvTex, side: side, wireframe:
 	
 // geometry
 var parameters = {
-
 equator: 4,
-
 equatorGap: function( u, t ) { return  0.5 *( 1 + Math.cos( 6.28 * u)) *( 0.5 -  u )*( 0.5 -  u ) * ( 1 + Math.sin( t ) ) },
 stretchSouth: function ( u, v, t ) { return  ( 1 + Math.cos( 6.28 * u)) *( 0.5 -  u )*( 0.5 -  u ) * ( 1 + Math.sin( t ) ) },
 wedges: 11,
 usedWedges: 8,
-
 topCircle: 7,
 withTop: true,
-
 bottomCircle: 3,
 withBottom: true,
-
 }
-
 var geometry = new THREE.BufferGeometry();
 geometry.createMorphGeometry = THREEp.createMorphGeometry; // insert the methode from THREEp.js
 geometry.createMorphGeometry( parameters ); // apply the methode
-
 // mesh
 var mesh = new THREE.Mesh( geometry, material );
 //var mesh = new THREE.Mesh( geometry, materials );
 scene.add( mesh );
-
-var vertexNumbersHelperSphere = new THREEp.vertexNumbersHelper( mesh, 1, 0x00aa00);
-vertexNumbersHelperSphere.update();
-
+var vertexFaceNumbersHelperSphere = new THREEp.vertexFaceNumbersHelper( mesh, 3, 1, 0x00aa00);
+vertexFaceNumbersHelperSphere.update();
 //geometry.morphVertices();
-
 animate();
-
 //..................
-
 function animate() {
-
 	requestAnimationFrame( animate );
 	
 	time = clock.getElapsedTime();
@@ -112,7 +91,7 @@ function animate() {
 	geometry.morphVertices( time );			
  	//geometry.morphFaces( time );
 	
-	vertexNumbersHelperSphere.update();
+	vertexFaceNumbersHelperSphere.update(3);
 	
 	renderer.render( scene, camera );
 	controls.update();
