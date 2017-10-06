@@ -12,3 +12,5 @@ _The addon is developed step by step._
 
 _currently only indexed BufferGeometry_
 
+# Use sandboxTHREEp.html to experiment. #
+
