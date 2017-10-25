@@ -14,3 +14,4 @@ _currently only indexed BufferGeometry_
 
 # Use sandboxTHREEp.html to experiment. #
 
+http://sandbox.threejs.hofk.de/
