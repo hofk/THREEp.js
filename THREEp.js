@@ -1,4 +1,4 @@
-// THREEp.js ( rev 87.3 alpha )
+// THREEp.js ( rev 87.7 alpha )
 
 /**
  * @author hofk / http://threejs.hofk.de/
@@ -12,8 +12,9 @@
 
 'use strict';
 
-		// !!!!!  Debug  !!!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				var debug = document.getElementById("debug"); 
+		// !!!!!  D E B U G  !!!!! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				// var debug = document.getElementById("debug"); 
+				// debug.value = ">> ";
 		/////////////////////////////////////////////////////////////////////////////////
 
 var g;	// THREE.BufferGeometry
@@ -32,23 +33,38 @@ p = {
 	usedWedges,		// used from total sperical wedges
 	wedgeOpen,		// wedge on edge open or closed
 	equator,		// half of spherical segments
-	bottomCircle,	// south pole is 0
-	topCircle,		// max. equator * 2 (is north pole)
-	withBottom,		// with a bottom (bottomCircle > 0)
-	withTop,		// with a top (topCircle < equator * 2)	
+	bottom,			// south pole is 0
+	top,			// max. equator * 2 (is north pole)
+	withBottom,		// with a bottom (bottom > 0)
+	withTop,		// with a top (top < equator * 2)	
 	style,			// 'map', 'relief', 'complete'
 	
 		// functions: u,v and result normally 0 .. 1, otherwise specific / interesting results!
-		// u azimuth (start: x axis)  v polar (start: south pole 0, end: north pole 1), t time
+		// u azimuth (start: x axis, counterclockwise) 		
+		
+		// for hemispheres: v polar (start: pole 0, end: equator 1), t time
 	
-	rPhiTheta,  	//	function ( u, v, t )	// radius depending on location, spherical coordinates u, v 
-	stretchSouth,	//	function ( u, v, t )	// stretch / compress in -y direction
-	stretchNorth, 	//	function ( u, v, t )	// stretch / compress in +y direction
+	stretchSouth,	//	function ( u, v, t )	// stretch / compress south hemisphere in -y direction
+	stretchNorth, 	//	function ( u, v, t )	// stretch / compress north hemisphere in +y direction
+	endPole,		//	function ( u, t )		// end angle ( to equator, per phi)
+	startPole, 		//	function ( u, t )		// start angle ( from south- or north pole, per phi)
+	scalePoleH,		//	function ( v, t )		// scaling hemispheres from pole to equator ( is overwritten by scalePole )
+	
+		// for sphere: v polar (start: south pole 0, end: north pole 1), t time
+	
+	rAzimuthPole,  //	function ( u, v, t )	// radius depending on location,
 	equatorGap,		//	function ( u, t )		// gap in relation to the radius
 	squeeze,		//  function ( u, t )		// 0 sphere to 1 flat circle
 	moveX,			//	function ( u, v, t )	// factor for radius, move in x direction 
 	moveY,			//	function ( u, v, t )	// factor for radius, move in y direction
 	moveZ,			//	function ( v, u, t )	// factor for radius, move in z direction
+	
+	endAzimuth,		//	function ( v, t )		// end azimuth angle phi (per theta)
+	startAzimuth,	//	function ( v, t )		// starting azimuth angle phi (per theta)
+	scaleAzimuth,	//	function ( u, t )		// scaling between start and end of azimuth angle ( phi 0 .. 2*PI)
+
+	scalePole, 		//	function ( v, t )		// scaling between start and end of polar angle (theta -PI/2 .. PI/2 )
+		
   	materialSouth,	//	function ( u, v, t )	// material South
 	materialNorth,	//	function ( u, v, t )	// material North
 	materialPlane,	//	function ( u, t )		// material of extra south top or north bottom
@@ -74,28 +90,57 @@ p = {
 	g.usedWedges =		p.usedWedges !== undefined ?		p.usedWedges 		: g.wedges;
 	g.wedgeOpen =		p.wedgeOpen !== undefined ?			p.wedgeOpen 		: false; // only if g.wedges !== g.usedWedges
 	g.equator =			p.equator !== undefined ?			p.equator			: 9;
-	g.bottomCircle =	p.bottomCircle !== undefined ? 		p.bottomCircle		: 0;
-	g.topCircle =		p.topCircle !== undefined ? 		p.topCircle			: g.equator * 2;
+	g.bottom =			p.bottom !== undefined ? 			p.bottom			: 0;
+	g.top =				p.top !== undefined ? 				p.top				: g.equator * 2;
 	g.withTop =			p.withTop	!== undefined ?			p.withTop			: false;
 	g.withBottom =		p.withBottom	!== undefined ?		p.withBottom		: false;
-	g.style =			p.style !== undefined ?				p.style				: "complete";	
-	g.rPhiTheta =		p.rPhiTheta !== undefined ? 		p.rPhiTheta			: function ( u, v, t ) { return 1 };
+	g.style =			p.style !== undefined ?				p.style				: "complete";
+		
 	g.stretchSouth =	p.stretchSouth !== undefined ?		p.stretchSouth		: function ( u, v, t ) { return 1 };
 	g.stretchNorth =	p.stretchNorth !== undefined ? 		p.stretchNorth		: function ( u, v, t ) { return 1 };
+	g.endPole =			p.endPole !== undefined ? 			p.endPole			: function ( u, t ) { return 1 };
+	g.startPole =		p.startPole !== undefined ? 		p.startPole			: function ( u, t ) { return 0 };
+	g.scalePoleH =	 	p.scalePoleH !== undefined ? 		p.scalePoleH		: function ( v, t ) { return v };
+	
+	g.rAzimuthPole =	p.rAzimuthPole !== undefined ? 		p.rAzimuthPole		: function ( u, v, t ) { return 1 };
 	g.equatorGap =		p.equatorGap !== undefined ? 		p.equatorGap		: function ( u, t ) { return 0 };
 	g.squeeze =			p.squeeze !== undefined ? 			p.squeeze			: function ( u, t ) { return 0 };
 	g.moveX =			p.moveX	!== undefined ? 			p.moveX				: function ( u, v, t ) { return 0 };
 	g.moveY =			p.moveY	!== undefined ? 			p.moveY				: function ( u, v, t ) { return 0 };
 	g.moveZ =			p.moveZ	!== undefined ? 			p.moveZ				: function ( u, v, t ) { return 0 };
 	
-	if ( g.topCircle - g.bottomCircle <= 0 ) g.wedgeOpen = true;
-	if ( g.wedges < g.usedWedges ) g.usedWedges = g.wedges;
-	if ( g.bottomCircle >= g.equator * 2 ) g.bottomCircle  = 0;
-	if ( g.topCircle > g.equator * 2) g.topCircle = g.equator * 2;
-	if ( g.topCircle < g.bottomCircle ) {
+	g.endAzimuth =		p.endAzimuth !== undefined ? 		p.endAzimuth		: function ( v, t ) { return 1 };
+	g.startAzimuth =	p.startAzimuth !== undefined ? 		p.startAzimuth		: function ( v, t ) { return 0 };
+	g.scaleAzimuth = 	p.scaleAzimuth !== undefined ? 		p.scaleAzimuth		: function ( u, t ) { return u };
+	
+	g.scalePole =	 	p.scalePole !== undefined ? 		p.scalePole			: function ( v, t ) { return v };
+	
+	
+	if( p.scalePole === undefined ) {
 		
-		g.bottomCircle  = 0;
-		g.topCircle = g.equator * 2;
+		// uses g.scalePoleH: like g.scalePoleS = g.scalePoleH; g.scalePoleN = g.scalePoleH;
+		
+		g.scaleH = true; // scaling between pole and equator per hemisphere
+			
+	} else {
+	
+		// uses the decomposed function
+		g.scalePoleS = function( v, t ) { return 2 * g.scalePole(  v / 2 , t ) };
+		g.scalePoleN = function( v, t ) { return 2 * ( 1 - g.scalePole( 1 -  v / 2, t ) ) };
+	 
+		g.scaleH = false;
+		
+	}
+		
+	if ( g.top - g.bottom <= 0 ) g.wedgeOpen = true;
+	if ( g.wedges < g.usedWedges ) g.usedWedges = g.wedges;
+	if ( g.bottom >= g.equator * 2 ) g.bottom  = 0;
+	if ( g.top > g.equator * 2) g.top = g.equator * 2;
+	
+	if ( g.top < g.bottom ) {
+		
+		g.bottom  = 0;
+		g.top = g.equator * 2;
 		
 	}
 	
@@ -147,44 +192,45 @@ function create() {
 	var faceCount;
 	var x, y, z, ux, uy;
 	var a, b, c;
-	var ni, iMin, iMax, jMin, jMax;	
+	var nih, iMin, iMax, jMin, jMax;	
 	var uvIdx;
 	var theta;
 	var phi;	
 	var phiOffset = Math.PI * ( 1 - uWed / wed);
-	var minEqtTop = Math.min( eqt, g.topCircle );
-	var maxEqtBottom = Math.max( eqt, g.bottomCircle );
-	var bottomNorth = eqt * 2 - g.bottomCircle;
-	var topNorth = eqt * 2 - g.topCircle;	
-	var minEqtBottomNorth = Math.min( eqt, bottomNorth );
-	
+		
+	var bottomS = g.bottom; 						// bottom south	hemisphere
+	var topS = Math.min( eqt, g.top ); 				// top south	hemisphere
+	var bottomN = eqt * 2 - g.top; 					// bottom north	hemisphere
+	var topN = Math.min( eqt, eqt * 2 - g.bottom);	// top north	hemisphere
+
 	g.wedgeSouthStartIdx = [];
 	g.wedgeSouthEndIdx = [];
 	g.wedgeNorthStartIdx = [];
 	g.wedgeNorthEndIdx = [];
 	
-	var ssIdx = minEqtTop - (g.bottomCircle === 0 ? 1 : g.bottomCircle ); // wedge south start index
+	var ssIdx = topS - ( bottomS === 0 ? 1 : bottomS ); // wedge south start index
 	var seIdx = 0; // wedge south end index
-	var nsIdx = minEqtBottomNorth - ( topNorth === 0 ? 1 : topNorth ); // wedge north start index
-	var neIdx = 0; // wedge north end index	
+	var nsIdx = topN - ( bottomN === 0 ? 1 : bottomN ); // wedge north start index
+	var neIdx = 0; // wedge north end index
+	
 	var pi2 = Math.PI / 2;
 	const SOUTH = -1;
 	const NORTH = 1;
 	
-	if ( g.bottomCircle === 0 ) g.withBottom = false;
-	if ( g.topCircle === eqt * 2 ) g.withTop = false;
+	if ( g.bottom === 0 ) g.withBottom = false;
+	if ( g.top === eqt * 2 ) g.withTop = false;
 		
 	//count vertices: south and north hemisphere
 	
 	vertexCount = 0;
 	
-	if ( g.bottomCircle < eqt ) {
+	if ( g.bottom < eqt ) {
 	
-		vertexCount += ( g.bottomCircle === 0  || g.withBottom ) ? 1 : 0;	// south pole || bottom
+		vertexCount += ( bottomS === 0  || g.withBottom ) ? 1 : 0;	// south pole || bottom
 
 		g.southVertex = vertexCount;
 		
-		for ( var i = g.bottomCircle === 0 ? 1 : g.bottomCircle ; i <= minEqtTop; i ++ ) {
+		for ( var i = bottomS === 0 ? 1 : bottomS ; i <= topS; i ++ ) {
 		
 			vertexCount += i * uWed + 1;
 					
@@ -192,12 +238,12 @@ function create() {
 		
 		g.southTopVertex = vertexCount - 1;
 		
-		vertexCount += ( g.topCircle <= eqt && g.withTop ) ? g.topCircle * uWed + 2 : 0;	// south top
+		vertexCount += ( g.top <= eqt && g.withTop ) ? g.top * uWed + 2 : 0;	// south top
 		
 		g.southWedgeVertex =  vertexCount;
 		vertexCount += ( !g.wedgeOpen ) ? 2 : 0; // wedge closed		
 				
-		for ( var i = g.bottomCircle === 0 ? 1 : g.bottomCircle ; i <= minEqtTop; i ++ ) {
+		for ( var i = bottomS === 0 ? 1 : bottomS ; i <= topS; i ++ ) {
 		
 			vertexCount += ( !g.wedgeOpen ) ? 2 : 0;  // wedge closed ( start / end )
 		
@@ -207,13 +253,13 @@ function create() {
 	
 	g.vertexNorthOffset = vertexCount;
 		
-	if ( g.topCircle > eqt ) {
+	if ( g.top > eqt ) {
 			
-		vertexCount += ( topNorth === 0 || g.withTop ) ? 1 : 0;	// north pole || top
+		vertexCount += ( bottomN === 0 || g.withTop ) ? 1 : 0;	// north pole || top
 		
 		g.northVertex =  vertexCount;
 		
-		for ( var i = topNorth === 0 ? 1 : topNorth ; i <= minEqtBottomNorth; i ++ ) {
+		for ( var i = bottomN === 0 ? 1 : bottomN ; i <= topN; i ++ ) {
 
 			vertexCount += i * uWed + 1; // equator is double (uv's, equator gap)
 
@@ -221,12 +267,12 @@ function create() {
 		
 		g.northBottomVertex = vertexCount - 1;
 		
-		vertexCount += ( g.bottomCircle >= eqt &&  g.withBottom ) ? bottomNorth * uWed + 2 : 0;	// north bottom
+		vertexCount += ( g.bottom >= eqt &&  g.withBottom ) ? topN * uWed + 2 : 0;	// north bottom
 		
 		g.northWedgeVertex =  vertexCount;
 		vertexCount += ( !g.wedgeOpen ) ? 2 : 0;	// wedge closed
 		
-		for ( var i = topNorth === 0 ?  1 : topNorth; i <= minEqtBottomNorth; i ++ ) {
+		for ( var i = bottomN === 0 ?  1 : bottomN; i <= topN; i ++ ) {
 		
 			vertexCount += ( !g.wedgeOpen ) ? 2 : 0;  // wedge closed ( start / end )
 		
@@ -239,13 +285,13 @@ function create() {
 	
 	faceCount = 0;
 	
-	if ( g.bottomCircle < eqt ) {
+	if ( g.bottom < eqt ) {
 	
-		faceCount += ( g.bottomCircle > 0 && g.withBottom ) ? g.bottomCircle * uWed : 0; // bottom south
+		faceCount += ( bottomS > 0 && g.withBottom ) ? bottomS * uWed : 0; // bottom south
 		
 		g.southFace = faceCount;
 		
-		for ( var i = g.bottomCircle; i < minEqtTop; i ++ ) {
+		for ( var i = bottomS; i < topS; i ++ ) {
 		
 			faceCount += ( 2 * i + 1 ) * uWed;
 						
@@ -253,29 +299,29 @@ function create() {
 		
 		g.southTopFace = faceCount;
 		
-		faceCount += ( g.topCircle <= eqt && g.withTop ) ? g.topCircle * uWed : 0; // top south
+		faceCount += ( g.top <= eqt && g.withTop ) ? g.top * uWed : 0; // top south
 		
 		g.southWedgeFace = faceCount;
 			
-		for ( var i = g.bottomCircle; i < minEqtTop; i ++ ) {
+		for ( var i = bottomS; i < topS; i ++ ) {
 		
 			faceCount += ( !g.wedgeOpen ) ? 2 : 0;	// wedge closed ( start / end )
 			
 		}
 		
-		faceCount += ( !g.wedgeOpen  &&  g.bottomCircle > 0  ) ? 2 : 0;	// wedge closed  middle if  g.bottomCircle > 0 
+		faceCount += ( !g.wedgeOpen  &&  bottomS > 0  ) ? 2 : 0;	// wedge closed  middle if  g.bottom > 0 
 						
 	}
 	
 	g.faceNorthOffset = faceCount;
 
-	if ( g.topCircle > eqt ) {
+	if ( g.top > eqt ) {
 		
-		faceCount += ( topNorth > 0 && g.withTop ) ? topNorth * uWed : 0;  // top north
+		faceCount += ( bottomN > 0 && g.withTop ) ? bottomN * uWed : 0;  // top north
 		
 		g.northFace = faceCount;
 	
-		for ( var i = topNorth; i < minEqtBottomNorth; i ++ ) {
+		for ( var i = bottomN; i < topN	; i ++ ) {
 		
 			faceCount += ( 2 * i + 1 ) * uWed;
 						
@@ -283,17 +329,17 @@ function create() {
 		
 		g.northBottomFace = faceCount;
 		
-		faceCount += ( g.bottomCircle >= eqt && g.withBottom ) ? bottomNorth * uWed : 0; // bottom	north
+		faceCount += ( g.bottom >= eqt && g.withBottom ) ? topN * uWed : 0; // bottom	north
 						
 		g.northWedgeFace = faceCount;
 		
-		for ( var i = topNorth; i < minEqtBottomNorth; i ++ ) {
+		for ( var i = bottomN; i < topN	; i ++ ) {
 		
 			faceCount += ( !g.wedgeOpen ) ? 2 : 0;	// wedge closed ( start / end )
 			
 		}
 				
-		faceCount += ( !g.wedgeOpen  && topNorth > 0  ) ? 2 : 0;	// wedge closed  middle if  topNorth > 0 
+		faceCount += ( !g.wedgeOpen  && bottomN > 0  ) ? 2 : 0;	// wedge closed  middle if  bottomN > 0 
 							
 	}	
 				
@@ -335,15 +381,15 @@ function create() {
 				
 		// faces, uvs south hemisphere
 		
-		if ( g.bottomCircle < eqt ) {
+		if ( g.bottom < eqt ) {
 		
-			if ( g.bottomCircle === 0 || g.withBottom ) { 
+			if ( bottomS === 0 || g.withBottom ) { 
 						
 				a = 0;  // vertex vIdx 0: south pole || bottom
 				b = 1;
 				c = 0;
 								
-				jMax = g.bottomCircle === 0 ? uWed : g.bottomCircle * uWed;
+				jMax = bottomS === 0 ? uWed : bottomS * uWed;
 				
 				for ( var j = 1; j <= jMax; j ++ ) {
 			
@@ -365,7 +411,7 @@ function create() {
 			
 			vIdx = g.southVertex;
 			
-			for ( var i = g.bottomCircle === 0 ? 1 : g.bottomCircle; i < minEqtTop; i ++ ) {
+			for ( var i = bottomS === 0 ? 1 : bottomS; i < topS; i ++ ) {
 				
 				for ( var w = 0; w < uWed; w ++ ) {
 					
@@ -410,17 +456,17 @@ function create() {
 			}
 			
 			
-			if ( g.topCircle <= eqt && g.withTop ) {
+			if ( g.top <= eqt && g.withTop ) {
 			
 				vIdx  = g.southTopVertex + 1; // uv's  c, b  
 		
-				a = vIdx + g.topCircle * uWed + 1;
+				a = vIdx + g.top * uWed + 1;
 				b = vIdx;
 				c = vIdx - 1;
 				
 				// faces
 				
-				for ( var j = 0; j < g.topCircle * uWed; j ++ ) {
+				for ( var j = 0; j < g.top * uWed; j ++ ) {
 				
 					b ++;
 					c ++;
@@ -431,13 +477,13 @@ function create() {
 				
 				// uv's
 				
-				for ( var j = 0; j < g.topCircle * uWed + 1; j ++ ) {
+				for ( var j = 0; j < g.top * uWed + 1; j ++ ) {
 	
-					phi = 2 * Math.PI * j / ( g.topCircle * wed ) + phiOffset;
+					phi = 2 * Math.PI * j / ( g.top * wed ) + phiOffset;
 					
-					// ux = 0.5 * ( 1 + g.topCircle / eqt * Math.sin( phi ) ); // mirrored
-					ux = 0.5 * ( 1 - g.topCircle / eqt * Math.sin( phi ) );	
-					uy = 0.5 * ( 1 + g.topCircle / eqt * Math.cos( phi ) );
+					// ux = 0.5 * ( 1 + g.top / eqt * Math.sin( phi ) ); // mirrored
+					ux = 0.5 * ( 1 - g.top / eqt * Math.sin( phi ) );	
+					uy = 0.5 * ( 1 + g.top / eqt * Math.cos( phi ) );
 					
 					storeUvs();
 					vIdx ++;
@@ -461,7 +507,7 @@ function create() {
 				b = a;
 				c = a + 1;
 				
-				iMax = ( minEqtTop - ( g.bottomCircle > 0 ? g.bottomCircle - 1 : 0 ) ) * 2;
+				iMax = ( topS - ( bottomS > 0 ? bottomS - 1 : 0 ) ) * 2;
 				
 				for ( var i = 0; i < iMax; i ++ ) {
 					b ++;
@@ -474,14 +520,14 @@ function create() {
 				// wedge uv's
 
 				ux = 0.5;
-				uy = 0.5 * ( 1 + Math.sin( -Math.PI / 2 * ( 1 - minEqtTop / eqt ) ) );
+				uy = 0.5 * ( 1 + Math.sin( -Math.PI / 2 * ( 1 - topS / eqt ) ) );
 			
 				storeUvs();
 				vIdx ++;
 				
-				iMin = g.bottomCircle > 0 ? g.bottomCircle - 1 : 0;
+				iMin = bottomS > 0 ? bottomS - 1 : 0;
 							
-				for ( var i = minEqtTop; i > iMin; i -- ) {
+				for ( var i = topS; i > iMin; i -- ) {
 												
 					theta = -Math.PI / 2 * (1 - i / eqt);
 					
@@ -494,12 +540,12 @@ function create() {
 				}
 				
 				ux = 0.5;	
-				uy = 0.5 * ( 1 +  Math.sin( -Math.PI / 2 * ( 1 - g.bottomCircle / eqt ) ) );
+				uy = 0.5 * ( 1 +  Math.sin( -Math.PI / 2 * ( 1 - bottomS / eqt ) ) );
 				
 				storeUvs();
 				vIdx ++;
 				
-				for ( var i = iMin + 1; i <= minEqtTop; i ++  ){
+				for ( var i = iMin + 1; i <= topS; i ++  ){
 											
 					theta = -Math.PI / 2 * ( 1 - i / eqt );
 					
@@ -517,9 +563,9 @@ function create() {
 			
 			vIdx = g.southVertex;
 			
-			for ( var i = g.bottomCircle === 0 ? 1 : g.bottomCircle; i <= minEqtTop; i ++ ) {
+			for ( var i = bottomS === 0 ? 1 : bottomS; i <= topS; i ++ ) {
 				
-				ni = i / eqt;
+				nih = i / eqt;
 				
 				for ( var j = 0; j < i * uWed + 1; j ++ ) {
 									
@@ -547,9 +593,9 @@ function create() {
 										
 					phi = 2 * Math.PI * j / ( i * wed ) + phiOffset;
 										
-					// ux = 0.5 * ( 1 - ni * Math.sin( phi ) ); // mirrored
-					ux = 0.5 * ( 1 + ni * Math.sin( phi ) );					
-					uy = 0.5 * ( 1 + ni * Math.cos( phi ) );
+					// ux = 0.5 * ( 1 - nih * Math.sin( phi ) ); // mirrored
+					ux = 0.5 * ( 1 + nih * Math.sin( phi ) );					
+					uy = 0.5 * ( 1 + nih * Math.cos( phi ) );
 					
 					storeUvs();
 					vIdx ++;
@@ -562,16 +608,16 @@ function create() {
 		
 		// faces, uvs  north hemisphere
 		
-		if ( g.topCircle > eqt ) {
+		if ( g.top > eqt ) {
 		
-			if ( topNorth === 0 || g.withTop ) { 
+			if ( bottomN === 0 || g.withTop ) { 
 				
 				a = g.vertexNorthOffset; // north pole || top
 
 				b = a;
 				c = a + 1;
 				
-				jMax = topNorth === 0 ? uWed : topNorth * uWed;
+				jMax = bottomN === 0 ? uWed : bottomN * uWed;
 				
 				for ( var j = 1; j <= jMax; j ++ ) {
 								
@@ -592,7 +638,7 @@ function create() {
 			
 			vIdx = g.northVertex;
 
-			for ( var i = topNorth === 0 ? 1 : topNorth; i < minEqtBottomNorth; i ++ ) {
+			for ( var i = bottomN === 0 ? 1 : bottomN; i < topN	; i ++ ) {
 				
 				for ( var w = 0; w < uWed; w ++ ) {
 				
@@ -636,17 +682,17 @@ function create() {
 				
 			}
 			
-			if ( g.bottomCircle >= eqt && g.withBottom ) {
+			if ( g.bottom >= eqt && g.withBottom ) {
 			
 				vIdx  = g.northBottomVertex + 1; // uv's  c, b
 								
-				a = vIdx + bottomNorth * uWed + 1;
+				a = vIdx + topN	* uWed + 1;
 				b = vIdx;
 				c = vIdx - 1;
 
 				// faces
 				
-				for ( var j = 0; j < bottomNorth * uWed; j ++ ) {
+				for ( var j = 0; j < topN * uWed; j ++ ) {
 				
 					b ++;
 					c ++;
@@ -657,13 +703,13 @@ function create() {
 				
 				// uv's
 				
-				for ( var j = 0; j < bottomNorth * uWed + 1; j ++ ) {
+				for ( var j = 0; j < topN * uWed + 1; j ++ ) {
 				
-					phi = 2 * Math.PI * j / ( bottomNorth * wed ) + phiOffset;
+					phi = 2 * Math.PI * j / ( topN * wed ) + phiOffset;
 									
-					// ux = 0.5 * ( 1 -  bottomNorth / eqt * Math.sin( phi ) ); // mirrored
-					ux = 0.5 * ( 1 + bottomNorth / eqt * Math.sin( phi ) );
-					uy = 0.5 * ( 1 + bottomNorth / eqt * Math.cos( phi ) );
+					// ux = 0.5 * ( 1 -  topN / eqt * Math.sin( phi ) ); // mirrored
+					ux = 0.5 * ( 1 + topN / eqt * Math.sin( phi ) );
+					uy = 0.5 * ( 1 + topN / eqt * Math.cos( phi ) );
 					
 					storeUvs();
 					vIdx ++;
@@ -687,7 +733,7 @@ function create() {
 				b = a;
 				c = a + 1;
 				
-				iMax = ( minEqtBottomNorth - ( topNorth > 0 ? topNorth - 1 : 0 ) ) * 2;
+				iMax = ( topN - ( bottomN > 0 ? bottomN - 1 : 0 ) ) * 2;
 				
 				for ( var i = 0; i < iMax; i ++ ) {
 				
@@ -701,14 +747,14 @@ function create() {
 				// wedge uv's
 				
 				ux = 0.5;
-				uy = 0.5 * ( 1 + Math.sin( Math.PI / 2 * ( 1 - minEqtBottomNorth / eqt ) ) );
+				uy = 0.5 * ( 1 + Math.sin( Math.PI / 2 * ( 1 - topN / eqt ) ) );
 				
 				storeUvs();
 				vIdx ++;
 				
-				iMin = topNorth > 0 ? topNorth - 1 : topNorth;
+				iMin = bottomN > 0 ? bottomN - 1 : bottomN;
 				
-				for ( var i = minEqtBottomNorth ; i > iMin; i -- ) {
+				for ( var i = topN ; i > iMin; i -- ) {
 					
 					theta = Math.PI / 2 * ( 1  - i / eqt );
 					
@@ -721,12 +767,12 @@ function create() {
 				}
 
 				ux = 0.5;	
-				uy = 0.5 * ( 1 +  Math.sin( Math.PI / 2 * ( 1 - topNorth / eqt ) ) );
+				uy = 0.5 * ( 1 +  Math.sin( Math.PI / 2 * ( 1 - bottomN / eqt ) ) );
 			
 				storeUvs();
 				vIdx ++;
 				
-				for ( var i = iMin + 1; i <= minEqtBottomNorth; i ++  ){
+				for ( var i = iMin + 1; i <= topN; i ++  ){
 					
 					theta = Math.PI / 2 * ( 1  - i / eqt );
 					
@@ -744,9 +790,9 @@ function create() {
 			
 			vIdx = g.northVertex;
 			
-			for ( var i = topNorth === 0 ? 1 : topNorth; i <= minEqtBottomNorth; i ++ ) {
+			for ( var i = bottomN === 0 ? 1 : bottomN; i <= topN; i ++ ) {
 				
-				ni = i / eqt;
+				nih = i / eqt;
 				
 				for ( var j = 0; j < i * uWed + 1; j ++ ) {
 				
@@ -774,9 +820,9 @@ function create() {
 					//nji = j / ( i * wed );
 					phi = 2 * Math.PI * j / ( i * wed ) + phiOffset;
 										
-					//ux = 0.5 * ( 1 + ni * Math.sin( phi ) ); // mirrored
-					ux = 0.5 * ( 1 - ni * Math.sin( phi ) ); 
-					uy = 0.5 * ( 1 + ni * Math.cos( phi ) );
+					//ux = 0.5 * ( 1 + nih * Math.sin( phi ) ); // mirrored
+					ux = 0.5 * ( 1 - nih * Math.sin( phi ) ); 
+					uy = 0.5 * ( 1 + nih * Math.cos( phi ) );
 					
 					storeUvs();
 					vIdx ++;
@@ -812,17 +858,58 @@ function morphVertices( time ) {
 	var r, ry, r0, r1, r1y, r2;			// calculated radius
 	var x, x0, x1, x2, y, y0, y1, y2, z, z0, z1, z2;	// coordinates
 	var dx, dy, dz;	
-	var ni, nji, iMin, iMax, jMin, jMax;;
+	var ni, nih, nji, iMin, iMax, jMin, jMax;;
 	var posIdx;
-	var theta, thetaSq, thetaY, thetaSqY;
-	var phi; 
+	var theta, thetaSq;
+	var phi;
+	var scalingAzimuth, scalingPole;
 	var phiOffset = Math.PI * ( 1 - uWed / wed);
-	var minEqtTop = Math.min( eqt, g.topCircle );
-	var maxEqtBottom = Math.max( eqt, g.bottomCircle );
-	var bottomNorth = eqt * 2 - g.bottomCircle;
-	var topNorth = eqt * 2 - g.topCircle;	
-	var minEqtBottomNorth = Math.min( eqt, bottomNorth );	
-	var qSq, alphaSq, rSq, hSq, cSq;
+		
+	var bottomS = g.bottom; 						// bottom south	hemisphere
+	var topS = Math.min( eqt, g.top ); 				// top south	hemisphere
+	var bottomN = eqt * 2 - g.top; 					// bottom north	hemisphere
+	var topN = Math.min( eqt, eqt * 2 - g.bottom);	// top north	hemisphere
+	
+	var qSq, alphaSq, rSq, hSq, cSq; // squeeze
+	
+	var bottomSCount = bottomS * wed;
+	var topSCount = topS * wed;	
+	var topNCount = topN * wed;
+	var bottomNCount = bottomN * wed;
+
+	var xBottomS = 0;
+	var yBottomS = 0;
+	var zBottomS = 0;
+	
+	var xBottomN = 0;
+	var yBottomN = 0;
+	var zBottomN = 0;
+	
+	var xPlaneS = 0;
+	var yPlaneS = 0;
+	var zPlaneS = 0;
+	
+	var xPlaneN = 0;
+	var yPlaneN = 0;
+	var zPlaneN = 0;
+	
+	var fullBottomS;
+	var fullPlaneS;
+	var fullBottomN;
+	var fullPlaneN;
+	
+	var fullCircle;
+	
+	var xPole;
+	var yPole;
+	var zPole;
+	
+	var startPole;
+	var endPole;
+	//var dP;
+	//var dS;
+	//var dN;
+	
 	var pi2 = Math.PI / 2;
 	
 	const SOUTH = -1;
@@ -832,50 +919,108 @@ function morphVertices( time ) {
 	
 	function xyzCalculation( south_north ) {
 	
-		if ( g.squeezeDefault ) {
-				
-			r = g.radius * g.rPhiTheta( nji, ni, t );
-			ry = r * ( south_north === SOUTH ? g.stretchSouth( nji, ni, t ) : g.stretchNorth( nji, ni, t ) ) ;
-			
-			x = r * Math.cos( theta ) * Math.cos( phi ) + g.radius * g.moveX( nji, ni, t );	
-			y = ry * Math.sin( thetaY ) + g.radius * ( south_north * g.equatorGap( nji, t ) / 2 + g.moveY( nji, ni, t ) ); 	
-			z = - r * Math.cos( theta ) * Math.sin( phi ) + g.radius * g.moveZ( nji, ni, t );				
+		scalingAzimuth = g.startAzimuth( ni, t ) + ( g.endAzimuth( ni, t ) - g.startAzimuth( ni, t ) ) * g.scaleAzimuth( nji, t );
+		 
+		phi = 2 * Math.PI * uWed / wed * scalingAzimuth + ( ( ni === 0 || ni === 1 ) ? 0 : phiOffset );
+		
+		
+		if ( g.scaleH )  {
+		
+			// ...  * g.scalePoleH( nih, t ) scaling between pole and equator per hemisphere --> south is like north
+			scalingPole = g.startPole( nji, t ) + ( g.endPole( nji, t ) - g.startPole( nji, t ) ) * g.scalePoleH( nih, t );
+			theta = south_north * pi2 * ( 1 - scalingPole );
 			
 		} else {
-							
+		
+			//dP = ( g.endPole( nji, t ) - g.startPole( nji, t ) );
+			//dS = ( 0.5 -  g.startPole( nji, t ) ) / dP; 
+			//dN = ( g.endPole( nji, t ) - 0.5 ) / dP;	
+			
+			if( south_north === SOUTH ) {
+			
+				//startPole = g.startPole( nji, t ) < 0.499 ? g.startPole( nji, t ) : 0.499;
+				startPole = 0;
+				//endPole = g.endPole( nji, t ) < 0.5 ? g.endPole( nji, t ) : 0.5;
+				endPole =  0.5;	
+				
+				//scalingPole = startPole + ( endPole  - startPole ) * g.scalePole(  nih * dS / dP , t )  * dP / dS ;
+				
+				scalingPole = startPole + ( endPole  - startPole ) * g.scalePoleS( nih, t );
+				 
+				theta = -pi2 + Math.PI * scalingPole ;
+						
+			} else {
+				
+				//startPole = g.endPole( nji, t ) > 0.511 ? 1 - g.endPole( nji, t ) : 0.499;
+				startPole = 0;
+				//endPole =  g.startPole( nji, t ) > 0.5 ? 1 - g.startPole( nji, t ) : 0.5;
+				endPole =  0.5;
+				
+				//scalingPole = startPole + ( endPole  - startPole ) * ( 1 - g.scalePole( 1 -  nih * dN / dP , t ) ) * dP / dN;
+				
+				scalingPole = startPole + ( endPole  - startPole ) * g.scalePoleN( nih, t );
+								
+				theta = pi2 - Math.PI * scalingPole;
+								
+			}
+						
+		}
+
+		if ( g.squeezeDefault ) {
+				
+			r = g.radius * g.rAzimuthPole( nji, ni, t );
+			
+			// ry = r * ( south_north === SOUTH ? g.stretchSouth( nji, nih, t ) : g.stretchNorth( nji, nih, t ) );
+	
+			x = r * Math.cos( theta ) * Math.cos( phi ) + g.radius * g.moveX( nji, ni, t );	
+			
+			// y = ry * Math.sin( theta ) + g.radius * ( south_north * g.equatorGap( nji, t ) / 2 + g.moveY( nji, ni, t ) );
+			y =  r * Math.sin( theta ); 
+			y *= ( south_north === SOUTH ? g.stretchSouth( nji, nih, t ) : g.stretchNorth( nji, nih, t ) );
+			y += g.radius * ( south_north * g.equatorGap( nji, t ) / 2 + g.moveY( nji, ni, t ) ); 
+			
+			z = -r * Math.cos( theta ) * Math.sin( phi ) + g.radius * g.moveZ( nji, ni, t );				
+			
+		} else {
+		
 			// squeeze
 
 			r0 = g.radius;
 			
 			x0 = r0 * Math.cos( theta ) * Math.cos( phi );
-			y0 = r0 * Math.sin( thetaY );
+			y0 = r0 * Math.sin( theta );
 			z0 = -r0 * Math.cos( theta ) * Math.sin( phi );
 				
-			r1 = g.radius * g.rPhiTheta( nji, ni, t );
-			r1y = r1 * ( south_north === SOUTH ? g.stretchSouth( nji, ni, t ) : g.stretchNorth( nji, ni, t ) );
+			r1 = g.radius * g.rAzimuthPole( nji, ni, t );
+			
+			// r1y = r1 * ( south_north === SOUTH ? g.stretchSouth( nji, nih, t ) : g.stretchNorth( nji, nih, t ) );
 			
 			x1 = r1 * Math.cos( theta ) * Math.cos( phi ) + g.radius * g.moveX( nji, ni, t );
-			y1 = r1y * Math.sin( thetaY ) + g.radius * ( south_north * g.equatorGap( nji, t ) / 2 + g.moveY( nji, ni, t ) ); 
-			z1 = - r1 * Math.cos( theta ) * Math.sin( phi ) + g.radius * g.moveZ( nji, ni, t );
+			
+			// y1 = r1y * Math.sin( theta ) + g.radius * ( south_north * g.equatorGap( nji, t ) / 2 + g.moveY( nji, ni, t ) );
+			y1 = r1 * Math.sin( theta );
+			y1 *= ( south_north === SOUTH ? g.stretchSouth( nji, nih, t ) : g.stretchNorth( nji, nih, t ) );
+			y1 += g.radius * ( south_north * g.equatorGap( nji, t ) / 2 + g.moveY( nji, ni, t ) ); 
+						
+			z1 = -r1 * Math.cos( theta ) * Math.sin( phi ) + g.radius * g.moveZ( nji, ni, t );
 			
 			dx = x1 - x0;
 			dy = y1 - y0;
 			dz = z1 - z0;
 		
-			qSq =  1 - g.squeeze( nji, t );
+			qSq =  1 - g.squeeze( nji, t );		// g.squeeze( nji, t ) === 1 ->  ERROR DIV 0: rSq = 1 / qSq  !!!!!!!!!!!!!!!!!!!!!!!!!
 			alphaSq = qSq * pi2;								// squeeze angle 
-			rSq = 1 / qSq;										// radius squeeze circle
+			rSq = 1 / qSq;										// radius squeeze circle 
 			hSq = pi2 / alphaSq * ( 1 - Math.cos( alphaSq ) );	// height (squeezed)
 			cSq = rSq - hSq;									// center(y)squeeze circle
 						
 			r2  = r0 * rSq;
 	
 			thetaSq = south_north * (  pi2 - alphaSq ) +  alphaSq * theta / pi2 ;		
-			thetaSqY = south_north * (  pi2 - alphaSq ) +  alphaSq * thetaY / pi2 ;
-		
+			
 			x2 = r2 * Math.cos( thetaSq ) * Math.cos( phi );	
-			y2 = r2 * Math.sin( thetaSqY ) - south_north * r0 * cSq;	
-			z2 = - r2 * Math.cos( thetaSq ) * Math.sin( phi );	
+			y2 = r2 * Math.sin( thetaSq ) - south_north * r0 * cSq;	
+			z2 = -r2 * Math.cos( thetaSq ) * Math.sin( phi );	
 			
 			x = x2 + dx;
 			y = y2 + dy;
@@ -898,62 +1043,167 @@ function morphVertices( time ) {
 			vIdx ++;
 		
 		}
+	
+		function setPoleVertex( south_north ) {
+						
+			if ( south_north === SOUTH ) {
+							
+				if ( bottomS === 0 ) {
+					
+					nih = 0.0001; //  number i hemisphere, 0 pole
+					ni = 0.00005; // south pole 0
+					
+					xPole = 0;
+					zPole = 0;
+										
+					for ( var j = wed - 1; j >= 0; j -- ) {
+					
+						nji = j / wed ;
+						xyzCalculation( SOUTH );
+						
+						xPole += x;
+						zPole += z;
+						
+					}
+	
+					x = xPole / wed;
+					x = xPole / wed;
+					
+				} else {
+				
+					x = xBottomS / bottomSCount;
+					y = yBottomS / bottomSCount;
+					z = zBottomS / bottomSCount;
+					
+				}
+				
+			} 
 			
-		function setPoleVertex( south_north, bottom_top ) {
+			if ( south_north === NORTH ) {
 			
-			ni = south_north === SOUTH ? 0 : 1;	 									
-			nji = 0;		
-			phi = 0; // phi = 2 * Math.PI * uWed / wed * nji;
-			theta = south_north * Math.PI / 2 ; 
+				if ( bottomN  === 0 ) {
+				
+					nih =  0.0001; //  number i hemisphere, 0 pole
+					ni = 0.99995;  // north pole 1
+					
+					xPole = 0;
+					zPole = 0;
+										
+					for ( var j = wed - 1; j >= 0; j -- ) {
+					
+						nji = j / wed ;
+						xyzCalculation( NORTH );
+						
+						xPole += x;
+						zPole += z;
+						
+					}
+	
+					x = xPole / wed;
+					x = xPole / wed;
+					
+				} else {
+					
+					x = xBottomN / bottomNCount;
+					y = yBottomN / bottomNCount;
+					z = zBottomN / bottomNCount;
+					
+				}
 			
-			if (south_north === SOUTH ) {
-				
-				if ( bottom_top === BOTTOM ) thetaY = -Math.PI / 2 * ( 1 - g.bottomCircle / eqt );
-				
-				if ( bottom_top === TOP ) thetaY = -Math.PI / 2 * ( 1 - g.topCircle / eqt );
-																
-			}	
-				
-			if (south_north === NORTH ) {
-				
-				if ( bottom_top === BOTTOM ) thetaY = Math.PI / 2 * ( g.bottomCircle - eqt ) / eqt;
-								
-				if ( bottom_top === TOP ) thetaY = Math.PI / 2 * ( g.topCircle - eqt ) / eqt;
-								
 			}
-			
-			xyzCalculation( south_north ); 
-			
+						
 			storeVertex();
 			
-		}		
-			
+		}	
+	
 		function setVertex( south_north ) {
-		
-			var jMax =  i * uWed + 1;
 			
-			ni = i / eqt; // identically for south and north hemisphere: 0 pole to 1 equator
-			theta = Math.PI / 2 * ( 1 - ni ) * south_north;	// SOUTH (-) NORTH (+)
-			thetaY = theta;
-			ni = south_north === SOUTH ? ni / 2 : 0.5 + ( 1 - ni ) / 2; //  0 to 1 for sphere: g.rPhiTheta()
+			fullBottomS = south_north === SOUTH && i === bottomS && i > 0 && ( g.withBottom || !g.wedgeOpen);
+			fullPlaneS = south_north === SOUTH && i === topS && i <= eqt && ( g.withTop || !g.wedgeOpen );
+			fullBottomN = south_north === NORTH && i === bottomN && i > 0 && ( g.withTop || !g.wedgeOpen );
+			fullPlaneN = south_north === NORTH && i === topN && i <= eqt  && ( g.withBottom || !g.wedgeOpen );
+			
+			fullCircle = fullBottomS || fullPlaneS || fullBottomN || fullPlaneN;
+			
+			var jMax =  fullCircle ? i * wed + 1 : i * uWed + 1;
+			
+			nih = i / eqt; //  number i hemisphere, 0 pole to 1 equator
+			
+			ni = south_north === SOUTH ? nih / 2 : 0.5 + ( 1 - nih ) / 2; //  south pole 0 to north pole 1 
 						
 			for ( var j = 0; j < jMax; j ++ ) { 
 												
 				nji = j / ( i * uWed );
-								
-				phi = 2 * Math.PI * uWed / wed * nji + phiOffset;
 				
 				xyzCalculation( south_north );
 				
-				storeVertex();
+				// saving the cumulative sum of positions
+				
+				if ( fullBottomS && j < jMax - 1 ) {
+					
+					xBottomS += x;
+					yBottomS += y;
+					zBottomS += z;
+					
+				}
+											
+				if ( fullPlaneS&& j < jMax - 1  ) {
+					
+					xPlaneS += x;
+					yPlaneS += y;
+					zPlaneS += z;
+					
+				 }
+						
+				if ( fullBottomN&& j < jMax - 1  ) {
+					
+					xBottomN += x;
+					yBottomN += y;
+					zBottomN += z;
+					
+				}	
+								 
+				if ( fullPlaneN&& j < jMax - 1  ) {
+					
+					xPlaneN += x;
+					yPlaneN += y;
+					zPlaneN += z;
+					
+				}
+				
+				// store only the used wedges
+				
+				if ( j < i * uWed + 1 ) storeVertex();
 				
 			}
 			
 		}
+	
+		function setPlaneCenterVertex( south_north ) {
+					
+			if ( south_north === SOUTH ) {
+				
+				x = xPlaneS / topSCount; 
+				y = yPlaneS / topSCount;
+				z = zPlaneS / topSCount;
+				 
+			}
+			
+			if ( south_north === NORTH ) {
+
+				x = xPlaneN / topNCount;
+				y = yPlaneN / topNCount;
+				z = zPlaneN / topNCount;
+				
+			}
+					
+			storeVertex();
+			
+		}		
 		
 		function setEdgeVertex( south_north ) {
 			
-			var jMax = south_north === SOUTH ? g.topCircle * uWed + 1 : bottomNorth * uWed + 1;
+			var jMax = south_north === SOUTH ? g.top * uWed + 1 : topN * uWed + 1;
 			var posEdgeDiff = jMax * 3;
 			
 			for ( var j = 0; j < jMax; j ++ ) {
@@ -975,48 +1225,37 @@ function morphVertices( time ) {
 		
 		// vertex positions south hemisphere
 			
-		if ( g.bottomCircle < eqt ) {
+		if ( g.bottom < eqt ) {
 
-			if ( g.bottomCircle === 0 || g.withBottom ) {
+			vIdx = g.southVertex;	
+			
+			for ( var i = ( bottomS === 0) ? 1 : bottomS; i <= topS; i ++ ) {
+				
+				setVertex( SOUTH );
+	
+			}
+			
+			if ( bottomS === 0 || g.withBottom ) {
 				
 				vIdx = 0;
-				setPoleVertex( SOUTH, BOTTOM );
+				setPoleVertex( SOUTH );
 												
 			}
 			
-			vIdx = g.southVertex;	
-			
-			for ( var i = ( g.bottomCircle === 0) ? 1 : g.bottomCircle; i <= minEqtTop; i ++ ) {
-				
-				setVertex( SOUTH );
-								
-			}
-
-			
-			if ( g.topCircle <= eqt && g.withTop ) {
-				
-				i = minEqtTop;	// i --; // because i with 'for' already ++
+			if ( g.top <= eqt && g.withTop ) {
 				
 				vIdx = g.southTopVertex + 1;  // a, c, b face 
+				
 				setEdgeVertex( SOUTH );
-				setPoleVertex( SOUTH, TOP );
+				setPlaneCenterVertex( SOUTH );
 								
 			}
 			
 			if(  !g.wedgeOpen ) {
-				
+						
 				vIdx = g.southWedgeVertex;
-								
-				ni =  0 ;	 									
-				nji = 0;		
-				phi = 0; // phi = 2 * Math.PI * uWed / wed * nji;
 				
-				theta = -Math.PI / 2; 
-				thetaY = -Math.PI / 2 * ( 1 - minEqtTop / eqt );
-			
-		  		xyzCalculation( SOUTH );
-				
-				storeVertex();
+				setPlaneCenterVertex( SOUTH );
 	
 				for ( var ssIdx = 0; ssIdx < g.wedgeSouthStartIdx.length; ssIdx ++ ) {
 					
@@ -1030,7 +1269,7 @@ function morphVertices( time ) {
 										
 				}
 				
-				setPoleVertex( SOUTH, BOTTOM );
+				setPoleVertex( SOUTH );
 				
 				for ( var seIdx = 0; seIdx < g.wedgeSouthEndIdx.length; seIdx ++ ) {
 				
@@ -1050,46 +1289,39 @@ function morphVertices( time ) {
 		
 		// vertex positions north hemisphere
 		
-		if ( g.topCircle > eqt  ) {
-		
-			vIdx = g.vertexNorthOffset;
+		if ( g.top > eqt  ) {
+	
+			vIdx = g.northVertex;
 			
-			if (  topNorth === 0  || g.withTop ) { 
-			
-				setPoleVertex( NORTH, TOP );  // north: from top to bottom!
-									
-			}
-			
-			for ( var i = ( topNorth === 0 ) ? 1 : topNorth; i <= minEqtBottomNorth; i ++ ) {
+			for ( var i = ( bottomN === 0 ) ? 1 : bottomN; i <= topN; i ++ ) {
 				
 				setVertex( NORTH );
 								
 			}
+					
+			if (  bottomN === 0  || g.withTop ) { 
 			
-			if ( g.bottomCircle >= eqt && g.withBottom ) {
+				vIdx = g.vertexNorthOffset;
+				
+				setPoleVertex( NORTH );  // north: from top to bottom!
+									
+			}
 			
-				i = minEqtBottomNorth;	// i --; // because i with 'for' already ++ 
+			if ( g.bottom >= eqt && g.withBottom ) {
+			
+				vIdx = g.northBottomVertex + 1; // a, c, b face
 				
 				setEdgeVertex( NORTH );
-				setPoleVertex( NORTH, BOTTOM );
+				setPlaneCenterVertex( NORTH );
 																	
 			}
 
 			if(  !g.wedgeOpen ) {
-			
+							
 				vIdx = g.northWedgeVertex;
-			
-				ni =  0;	 									
-				nji = 0;		
-				phi = 0; // phi = 2 * Math.PI * uWed / wed * nji;
 				
-				theta = Math.PI / 2;
-				thetaY = Math.PI / 2 * ( 1 - ( eqt * 2 - maxEqtBottom ) / eqt );
+				setPlaneCenterVertex( NORTH );
 				
-				xyzCalculation( NORTH ); 
-				
-				storeVertex();
-								
 				for ( var nsIdx = 0; nsIdx < g.wedgeNorthStartIdx.length; nsIdx ++ ) {
 				
 					posIdx =  vIdx * 3;
@@ -1102,7 +1334,7 @@ function morphVertices( time ) {
 										
 				}
 
-				setPoleVertex( NORTH, TOP );
+				setPoleVertex( NORTH );
 				
 				for ( var neIdx = 0; neIdx < g.wedgeNorthEndIdx.length; neIdx ++ ) {
 				
@@ -1142,14 +1374,20 @@ function morphFaces( time ) {
 		
 		var jMax;
 		
-		var minEqtTop = Math.min( eqt, g.topCircle );
-		var maxEqtBottom = Math.max( eqt, g.bottomCircle );
+		var bottomS = g.bottom; 						// bottom south	hemisphere
+		var topS = Math.min( eqt, g.top ); 				// top south	hemisphere
+		var bottomN = eqt * 2 - g.top; 					// bottom north	hemisphere
+		var topN = Math.min( eqt, eqt * 2 - g.bottom);	// top north	hemisphere
 		
-		var bottomNorth = eqt * 2 - g.bottomCircle;
-		var topNorth = eqt * 2 - g.topCircle;
+		/*
+		//var minEqtTop = Math.min( eqt, g.top ); // topS
+		var bottomNorth = eqt * 2 - g.bottom;  // topN
+		var minEqtBottomNorth = Math.min( eqt, bottomNorth ); // topN
+		var topNorth = eqt * 2 - g.top; 	// bottomN
+						
+		// var maxEqtBottom = Math.max( eqt, g.bottom ); // nicht mehr benutzt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		*/
 		
-		var minEqtBottomNorth = Math.min( eqt, bottomNorth );
-			
 		var fIdx = 0;	// face index
 		
 		// indexed and non-indexed BufferGeometry identical
@@ -1158,13 +1396,13 @@ function morphFaces( time ) {
 		
 			// south hemisphere
 			
-			if ( g.bottomCircle < eqt  ) {
+			if ( g.bottom < eqt  ) {
 				
 				if ( g.withBottom && !g.materialSouthDefault ) {
 				
-					for ( var j = 0; j < g.bottomCircle * uWed; j ++ ) {
+					for ( var j = 0; j < bottomS * uWed; j ++ ) {
 						
-						g.groups[ fIdx ].materialIndex =  g.materialSouth( ( j + 0.5 ) / ( g.bottomCircle * uWed ), g.bottomCircle / eqt, t );
+						g.groups[ fIdx ].materialIndex =  g.materialSouth( ( j + 0.5 ) / ( bottomS * uWed ), bottomS / eqt, t );
 						
 						fIdx ++;
 						
@@ -1177,7 +1415,7 @@ function morphFaces( time ) {
 					
 					fIdx = g.southFace;
 						
-					for ( var i = g.bottomCircle; i < minEqtTop; i ++ ) {
+					for ( var i = bottomS; i < topS; i ++ ) {
 						
 						jMax = ( 2 * i + 1 ) * uWed;
 						
@@ -1193,14 +1431,14 @@ function morphFaces( time ) {
 					
 				}	
 				
-				if ( g.topCircle <= eqt && g.withTop && !g.materialPlaneDefault ) {
+				if ( g.top <= eqt && g.withTop && !g.materialPlaneDefault ) {
 				
 					
 					fIdx = g.southTopFace;
 					
-					for ( var j = 0; j < g.topCircle * uWed; j ++ ) {
+					for ( var j = 0; j < g.top * uWed; j ++ ) {
 						
-						g.groups[ fIdx ].materialIndex =  g.materialPlane( ( j + 0.5 ) / ( g.topCircle * uWed ), t );
+						g.groups[ fIdx ].materialIndex =  g.materialPlane( ( j + 0.5 ) / ( g.top * uWed ), t );
 						
 						fIdx ++;
 						
@@ -1212,11 +1450,11 @@ function morphFaces( time ) {
 										
 					fIdx = g.southWedgeFace;
 										
-					wedgeFacesCount =  2 * ( minEqtTop - g.bottomCircle )  + ( g.bottomCircle > 0 ? 2 : 0 );
+					wedgeFacesCount =  2 * ( topS - bottomS )  + ( bottomS > 0 ? 2 : 0 );
 										
-					 for ( var j = 0, i = g.bottomCircle; j < wedgeFacesCount; j ++, i ++ ) {
+					 for ( var j = 0, i = bottomS; j < wedgeFacesCount; j ++, i ++ ) {
 					 
-						g.groups[ fIdx ].materialIndex = g.materialWedge(  0.5 * ( 1 + i / ( minEqtTop * 2 ) ), t );
+						g.groups[ fIdx ].materialIndex = g.materialWedge(  0.5 * ( 1 + i / ( topS * 2 ) ), t );
 							
 						fIdx ++;
 						
@@ -1228,15 +1466,15 @@ function morphFaces( time ) {
 						
 			// north hemisphere
 			
-			if ( g.topCircle > eqt ) {
+			if ( g.top > eqt ) {
 							
 				if ( g.withTop && !g.materialNorthDefault )  {
 					
 					fIdx = g.faceNorthOffset;
 
-					for ( var j = 0; j < topNorth * uWed; j ++ ) {
+					for ( var j = 0; j < bottomN * uWed; j ++ ) {
 						
-						g.groups[ fIdx ].materialIndex =  g.materialNorth( ( j + 0.5 ) / ( topNorth * uWed ), topNorth / eqt, t );
+						g.groups[ fIdx ].materialIndex =  g.materialNorth( ( j + 0.5 ) / ( bottomN * uWed ), bottomN / eqt, t );
 						
 						fIdx ++;
 						
@@ -1248,7 +1486,7 @@ function morphFaces( time ) {
 					
 					fIdx = g.northFace;
 
-					for ( var i = topNorth; i < minEqtBottomNorth; i ++ ) {
+					for ( var i = bottomN; i < topN	; i ++ ) {
 						
 						jMax = ( 2 * i + 1 ) * uWed;
 											
@@ -1264,13 +1502,13 @@ function morphFaces( time ) {
 					
 				}	
 							
-				if ( g.bottomCircle >= eqt && g.withBottom && !g.materialPlaneDefault ) {
+				if ( g.bottom >= eqt && g.withBottom && !g.materialPlaneDefault ) {
 					
 					fIdx = g.northBottomFace;
 					
-					for ( var j = 0; j < bottomNorth * uWed; j ++ ) {
+					for ( var j = 0; j < topN * uWed; j ++ ) {
 						
-						g.groups[ fIdx ].materialIndex =  g.materialPlane( ( j + 0.5 ) / (  bottomNorth * uWed ), t );
+						g.groups[ fIdx ].materialIndex =  g.materialPlane( ( j + 0.5 ) / (  topN * uWed ), t );
 						
 						fIdx ++;
 						
@@ -1282,11 +1520,11 @@ function morphFaces( time ) {
 					
 					fIdx = g.northWedgeFace;
 					
-					wedgeFacesCount =  2 * ( minEqtBottomNorth - topNorth ) + ( topNorth > 0 ? 2 : 0 );
+					wedgeFacesCount =  2 * ( topN - bottomN ) + ( bottomN > 0 ? 2 : 0 );
 					
-					for ( var j = 0, i = topNorth; j < wedgeFacesCount; j ++, i ++ ) {
+					for ( var j = 0, i = bottomN; j < wedgeFacesCount; j ++, i ++ ) {
 						
-						g.groups[ fIdx ].materialIndex = g.materialWedge(  0.5 * ( 1 + i / ( minEqtBottomNorth * 2 ) ), t );
+						g.groups[ fIdx ].materialIndex = g.materialWedge(  0.5 * ( 1 + i / ( topN * 2 ) ), t );
 						
 						fIdx ++;
 						

@@ -60,9 +60,9 @@ material.specular.setRGB(0.45, 0.0, 0.75);
 var parameters = {
 
 // tooth
-	bottomCircle: 1,
+	bottom: 1,
 	withBottom: true,
-	rPhiTheta: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
+	rAzimuthPole: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
 	stretchNorth:	function ( u, v, t ) { return  0.6 },
 	stretchSouth:	function ( u, v, t ) { return  2 + Math.cos( 6.28 * u ) + v * v * Math.sin( 6.28 * v ) },
 	

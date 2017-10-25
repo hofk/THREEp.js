@@ -52,9 +52,9 @@ var material = new THREE.MeshBasicMaterial( { map: uvTex, side: side, wireframe:
 // var material = new THREE.MeshPhongMaterial( { side: side, wireframe: true } );
 /*
 // tooth
-	bottomCircle: 1,
+	bottom: 1,
 	withBottom: true,
-	rPhiTheta: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
+	rAzimuthPole: function( u, v, t ) { return  1 / ( 1 + Math.exp( Math.sin( 6.28 * u ) + v ) ) },
 	stretchNorth:	function ( u, v, t ) { return  0.6 },
 	stretchSouth:	function ( u, v, t ) { return  2 + Math.cos( 6.28 * u ) + v * v * Math.sin( 6.28 * v ) },
 */
@@ -66,9 +66,9 @@ equatorGap: function( u, t ) { return  0.5 *( 1 + Math.cos( 6.28 * u)) *( 0.5 - 
 stretchSouth: function ( u, v, t ) { return  ( 1 + Math.cos( 6.28 * u)) *( 0.5 -  u )*( 0.5 -  u ) * ( 1 + Math.sin( t ) ) },
 wedges: 11,
 usedWedges: 8,
-topCircle: 7,
+top: 7,
 withTop: true,
-bottomCircle: 3,
+bottom: 3,
 withBottom: true,
 }
 var geometry = new THREE.BufferGeometry();
