@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- ........ sandbox THREEp ( rev 88.0 ALPHA ) ........
+<!-- ........ sandbox THREEp ( rev 88.4 beta) ........
 /**
  * @author hofk / http://sandbox.threejs.hofk.de/
 */
@@ -18,9 +18,9 @@
 
 <body bgcolor="#cccccc ">
 
-	<!-- D E B U G !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+	<!-- D E B U G !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 	
 	
-	<div id="output"> v : faces</div> 										-->
+	<div id="output"> v : faces</div> 								-->	
 	
 	<!-- <input type="text" size="500" id="debug" value="Debug: " > <br />  -->
 		
@@ -44,9 +44,8 @@
 									<input type="radio" name="style" id="map"	> map <br />		
 	. radius .| wedges -> used | equator -bottom -top -Circle |
 								
-									<!-- 
+									 
 									<input type="radio" name="geom" id="geometry" > Geometry
-									 -->	
 									<input type="radio" name="geom" id="indexedbuffergeo" checked="checked" > indexed - 
 									<input type="radio" name="geom" id="nonindexedbuffergeo" > non indexed - BufferGeometry
 									
@@ -95,7 +94,7 @@
 	- 0.1 - material north (u,v,t)	<br /><input type="text" id="materialNorth"		size="36" value="0.1"><br />  		
 	- 0.1 - material plane (u,t) - - - - - - - -  material: <br />
 									<input type="text" id="materialPlane"		size="36" value="0.1">
-									<button type="button" onclick="buttonMultiMaterial()"> materials  </button> <br /> 
+									<button type="button" onclick="buttonMultiMaterial()"> materials, describe fixed  </button> <br /> 
 									
 	- 0.1 - material wedge (v,t) - - - - - - - -  
 									<input type="color"		id="color" 	value="#880088"	> color 1	<br />	
@@ -129,9 +128,13 @@
 	</div>
 
 	
-	<div id="materialBox" style="width: 600px; height: 530px; padding: 5px; background-color: #feffe6; border: 2px solid #66cc33">		
+	<div id="materialBox" style="width: 600px; height: 580px; padding: 5px; background-color: #feffe6; border: 2px solid #66cc33">		
 		If material ..(u,v,t) becomes greater then 1.099.., the script will crash. <br />
-		
+		Describe fixed materials with digits 0 .. 9<br />
+		( , separeted for spherical segments for a hemisphere from pole to equator, additional bottom and top  <br />
+		 . is a placeholder for faces that should not change)<br />
+		<textarea id="fixedMaterial" rows="10" > 
+		</textarea> <--> (don't enter)<br />
 		MATERIALS: material index 0 .. 9, grey 10 ( function result * 10 ) <br/>
 		0 <img src = "transparent.png"	width="100" height="100"/>
 		1 <img src = "choosecolor.png"	width="100" height="100"/>
@@ -193,6 +196,7 @@ var materialSouthExpr;
 var materialNorthExpr;
 var materialPlaneExpr;
 var materialWedgeExpr;
+var fixedMaterialArray = [];
 
 var color;
 var wireframe;
@@ -234,6 +238,8 @@ var map			= document.getElementById( "map" );
 var geo			= document.getElementById( "geometry" );
 var indexedbuffergeo = document.getElementById( "indexedbuffergeo" );
 var indexedBuffer;
+
+document.getElementById( "fixedMaterial" ).value = "....................,....................,....................,....................,....................,....................,....................,....................,....................,....................";
 
 var vertexIndexes;
 var faceIndexes;
@@ -347,6 +353,9 @@ function showNewMesh() {
 	materialNorthExpr = 			 document.getElementById( "materialNorth" ).value;
 	materialPlaneExpr = 			 document.getElementById( "materialPlane" ).value;
 	materialWedgeExpr = 			 document.getElementById( "materialWedge" ).value;
+	inp.fixedMaterial =				 document.getElementById( "fixedMaterial"  ).value;
+	
+	fixedMaterialArray = inp.fixedMaterial.split( ',' );
 	
 	indexedBuffer = indexedbuffergeo.checked;
 	
@@ -395,19 +404,23 @@ function showNewMesh() {
 		materialNorth:	materialNorthFunc,	// material north
 		materialPlane:	materialPlaneFunc,	// material plane
 		materialWedge:	materialWedgeFunc,	// material wedge
+		
+			// string array (string of digits) seperated with a ,
+			
+		fixedMaterial:	fixedMaterialArray,	// fixed material index, overrides materialCover
 				
 	}	
 	
 	if ( scalePoleExpr !== "v" ) p.scalePole = scalePoleFunc;
 	
 	// create the morph geometry / buffer geometry
-/*	
+
 	if ( geo.checked ) {
 		
 		geometry = new THREE.Geometry();						// * base class geometry object for costum
 			
 	}
-*/	
+
 	if ( indexedbuffergeo.checked   || nonindexedbuffergeo.checked ) {
 		
 		geometry = new THREE.BufferGeometry();					// * base class buffer geometry object for costum
@@ -423,7 +436,7 @@ function showNewMesh() {
 	flatShading =	document.getElementById( "flatShading" ).checked;
 	
 	//shading =	flatshading ? THREE.FlatShading : THREE.SmoothShadig;  // old
-	//	.flatShading: true or false; // three.js r87
+	//	.flatShading: true or false; // since three.js r87
 	
 	doubleSide =	document.getElementById( "doubleSide" ).checked;
 	side =			doubleSide ? THREE.DoubleSide : THREE.FrontSide;
