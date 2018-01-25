@@ -1,5 +1,5 @@
 # THREEp.js
----
+
 three.js addon, to produce almost infinite many time-varying Geometries and BufferGeometries with polar / spherical functions
 
 In contrast to THREEf.js, polar / spherical coordinates are used here for the functions.
@@ -104,7 +104,7 @@ p = {
 	materialNorth,		//	function ( u, v, t )	// material North
 	materialPlane,		//	function ( u, t )		// material of extra south top or north bottom
 	materialWedge,		//	function ( v, t )		// material wedge side
-												// material: round( result*10 ) is material index  0 .. 10
+									   // material: round( result*10 ) is material index  0 .. 10
 	
 			// string array (strings of digits) seperated with a ,
 	
