@@ -1,5 +1,5 @@
 # THREEp.js
-# still beta version
+
 
 //
 
