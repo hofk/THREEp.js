@@ -85,7 +85,7 @@ p = {
 	
 	stretchSouth,	//	function ( u, v, t )	// stretch / compress south hemisphere in -y direction
 	stretchNorth,	//	function ( u, v, t )	// stretch / compress north hemisphere in +y direction
-	scalePoleH,	//	function ( v, t )		// scaling hemispheres from pole to equator ( is overwritten by scalePole )
+	scalePoleH,	//	function ( v, t )	// scaling hemispheres from pole to equator ( is overwritten by scalePole )
 	
 		// for sphere: v polar (start: south pole 0, end: north pole 1), t time
 		
