@@ -16,7 +16,7 @@ see also https://discourse.threejs.org/t/addon-produces-almost-infinite-many-tim
 Produce almost infinite many time-varying Geometries or BufferGeometries with only 11 properties, 20 functions and 1 array:
 
 ````
-geometry = new THREE.Geometry();    // base class geometry object from Tthree.js
+geometry = new THREE.Geometry();    // base class geometry object from three.js
 // or 
 geometry = new THREE.BufferGeometry();    // base class buffer-geometry object from three.js
 
@@ -28,9 +28,10 @@ geometry.createMorphGeometry();    // apply the methode ( here without parameter
 
 mesh = new THREE.Mesh( geometry, materials ); // create a material array: materials
 scene.add( mesh );
+
 ````
     
-    Include: <script src="THREEp.js"></script>
+Include: <script src="THREEp.js"></script>
     
 __Example:__
 
