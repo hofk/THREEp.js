@@ -63,48 +63,48 @@ p = {
 	
 		// simple properties
 	
-	indexed,		// indexed or non indexed BufferGeometry
-	radius,			// reference sphere radius, multiplier for functions
-	wedges,			// spherical wedges, total
-	usedWedges,		// used from total sperical wedges
-	wedgeOpen,		// wedge on edge open or closed
-	equator,		// half of spherical segments
-	bottom,			// south pole is 0
-	top,			// max. equator * 2 (is north pole)
-	withBottom,		// with a bottom (bottom > 0)
-	withTop,		// with a top (top < equator * 2)
-	style,			// 'map', 'relief', 'complete'
+	indexed,	// indexed or non indexed BufferGeometry
+	radius,		// reference sphere radius, multiplier for functions
+	wedges,		// spherical wedges, total
+	usedWedges,	// used from total sperical wedges
+	wedgeOpen,	// wedge on edge open or closed
+	equator,	// half of spherical segments
+	bottom,		// south pole is 0
+	top,		// max. equator * 2 (is north pole)
+	withBottom,	// with a bottom (bottom > 0)
+	withTop,	// with a top (top < equator * 2)
+	style,		// 'map', 'relief', 'complete'
 	
 		// functions: u,v and result normally 0 .. 1, otherwise specific / interesting results!
 		// u azimuth (start: x axis, counterclockwise)
 	
-	endPole,		//	function ( u, t )		// end angle ( to equator, per phi)
-	startPole,		//	function ( u, t )		// start angle ( from south- or north pole, per phi)
+	endPole,	//	function ( u, t )	// end angle ( to equator, per phi)
+	startPole,	//	function ( u, t )	// start angle ( from south- or north pole, per phi)
 	
 		// for hemispheres: v polar (start: pole 0, end: equator 1), t time
 	
 	stretchSouth,	//	function ( u, v, t )	// stretch / compress south hemisphere in -y direction
 	stretchNorth,	//	function ( u, v, t )	// stretch / compress north hemisphere in +y direction
-	scalePoleH,		//	function ( v, t )		// scaling hemispheres from pole to equator ( is overwritten by scalePole )
+	scalePoleH,	//	function ( v, t )		// scaling hemispheres from pole to equator ( is overwritten by scalePole )
 	
 		// for sphere: v polar (start: south pole 0, end: north pole 1), t time
 		
-	scalePole,		//	function ( v, t )		// scaling between start and end of polar angle (theta -PI/2 .. PI/2 )
+	scalePole,	//	function ( v, t )	// scaling between start and end of polar angle (theta -PI/2 .. PI/2 )
 	rAzimuthPole,	//	function ( u, v, t )	// radius depending on location,
-	equatorGap,		//	function ( u, t )		// gap in relation to the radius
-	squeeze,		//	function ( u, t )		// 0 sphere to 1 flat circle
-	moveX,			//	function ( u, v, t )	// factor for radius, move in x direction 
-	moveY,			//	function ( u, v, t )	// factor for radius, move in y direction
-	moveZ,			//	function ( v, u, t )	// factor for radius, move in z direction
-	explod,			// 	function ( t )			// factor for exploded view (only non indexed BufferGeometry)
-	endAzimuth,		//	function ( v, t )		// end azimuth angle phi (per theta)
-	startAzimuth,		//	function ( v, t )		// starting azimuth angle phi (per theta)
-	scaleAzimuth,		//	function ( u, t )		// scaling between start and end of azimuth angle ( phi 0 .. 2*PI)
-  	materialSouth,		//	function ( u, v, t )	// material South
-	materialNorth,		//	function ( u, v, t )	// material North
-	materialPlane,		//	function ( u, t )		// material of extra south top or north bottom
-	materialWedge,		//	function ( v, t )		// material wedge side
-									   // material: round( result*10 ) is material index  0 .. 10
+	equatorGap,	//	function ( u, t )	// gap in relation to the radius
+	squeeze,	//	function ( u, t )	// 0 sphere to 1 flat circle
+	moveX,		//	function ( u, v, t )	// factor for radius, move in x direction 
+	moveY,		//	function ( u, v, t )	// factor for radius, move in y direction
+	moveZ,		//	function ( v, u, t )	// factor for radius, move in z direction
+	explod,		// 	function ( t )		// factor for exploded view (only non indexed BufferGeometry)
+	endAzimuth,	//	function ( v, t )	// end azimuth angle phi (per theta)
+	startAzimuth,	//	function ( v, t )	// starting azimuth angle phi (per theta)
+	scaleAzimuth,	//	function ( u, t )	// scaling between start and end of azimuth angle ( phi 0 .. 2*PI)
+  	materialSouth,	//	function ( u, v, t )	// material South
+	materialNorth,	//	function ( u, v, t )	// material North
+	materialPlane,	//	function ( u, t )	// material of extra south top or north bottom
+	materialWedge,	//	function ( v, t )	// material wedge side
+						          // material: round( result*10 ) is material index  0 .. 10
 	
 			// string array (strings of digits) seperated with a ,
 	
