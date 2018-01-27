@@ -74,7 +74,7 @@ parameterList[ 11 ].value = "//0011 screwedIn @author hofk  \n	rAzimuthPole: fun
 //___________________________________________________________
 document.images[ 12 ].src = "img/0012_bird.png";
 parameterList[ 12 ].value = "//0012 bird @author hofk  \n	rAzimuthPole:	function ( u, v, t ) { return u < 0.5 ? Math.atan( 1.5 * u ) : Math.tan( 0.5 * u ) },\n	squeeze:	function ( u, t ) { return u },";
-//___________________________________________________________
+//___________________________________________________________20_relief
 document.images[ 13 ].src = "img/0013_cutDahlia.png";
 parameterList[ 13 ].value = "//0013 cutDahlia @author hofk  \n	indexed: false,\n	explode: function ( t ) { return 0.1 },\n	wedgeOpen: true,	\n	equator: 6,	\n	top: 6,";
 //___________________________________________________________
@@ -84,8 +84,27 @@ parameterList[ 14 ].value = "//0014 birdhead @author hofk  \n	wedges: 10,\n	used
 document.images[ 15 ].src = "img/0015_clamshell.png";
 parameterList[ 15 ].value = "//0015_clamshell @author hofk  \n	wedgeOpen: true,	\n	rAzimuthPole: function ( u, v, t ) { return Math.exp( -6 * u ) },";
 //___________________________________________________________
-document.images[ 16 ].src = "img/    .png";
-parameterList[ 16 ].value = "//0...Here is the right place for your example! \n ";_
+document.images[ 16 ].src = "img/0016_smalToBig.png";
+parameterList[ 16 ].value = "//0016 smalToBig @author hofk  \n	rAzimuthPole: function( u, v, t ) { return ( Math.sin( u )+ Math.sqrt( v ) * Math.sin( Math.PI * v * v ) ) },";
+//___________________________________________________________
+document.images[ 17 ].src = "img/0017_flatToHigh.png";
+parameterList[ 17 ].value = "//0017 flatToHigh @author hofk  \n	squeeze: function( u, t ) { return Math.sin( 2 * Math.PI * u ) },";
+//___________________________________________________________
+document.images[ 18 ].src = "img/0018_scalePole.png";
+parameterList[ 18 ].value = "//0018 scalePole @author hofk  \n	scalePole: function( v, t ) { return Math.sqrt( v ) },";
+//___________________________________________________________
+document.images[ 19 ].src = "img/0019_scalePoleHemisph.png";
+parameterList[ 19 ].value = "//0019 scalePoleHemisph @author hofk  \n	scalePoleH: function( v, t ) { return Math.sqrt( v ) },";
+//___________________________________________________________
+document.images[20].width = "320";
+document.images[ 20 ].src = "img/0020_relief.png";
+parameterList[ 20 ].value = "//0020 relief @author hofk   - MOVED by parameter t -  \n	wedges: 5,\n	usedWedges: 4,\n	equator: 5,\n	squeeze: function( u, t ) { return 0.45 * ( 1 + Math.sin( 0.5 * t ) ) },\n	rAzimuthPole: function ( u, v, t ) { return 0.75 + 2 * ( 0.5 - v ) * ( 0.5 - v ) + 0.2 * Math.sin( 6.28 * u ) },\n	stretchNorth: function ( u, v, t ) { return 1 + 0.4 * u },";
+//___________________________________________________________
+document.images[ 21 ].src = "img/0021_superscaled.png";
+parameterList[ 21 ].value = "//0021 superscaled @author hofk  \n	scalePole: function( v, t ) { return v * v * v },";
+//___________________________________________________________
+document.images[ 22 ].src = "img/    .png";
+parameterList[ 22 ].value = "//0...Here is the right place for your example! \n ";
 //__________________________________________________________
   // +++++ Do not destroy the following instructions. +++++ 
   //
