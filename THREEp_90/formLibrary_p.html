@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+	<meta charset="utf-8" />
+	<title> form library THREEp.js </title>
+</head>
+<body>
+	<h3> form Library THREEp.js  / @author hofk / http://sandbox.threejs.hofk.de/ </h3>
+	Join GitHub. Append your form in this file. https://github.com/hofk/THREEp.js . Use the examples as follow:</br>
+	</br>	
+</body>
+
+<script> // Do not change this first part.
+	info = document.body.appendChild( document.createElement( "textarea" ) );
+	info.rows="16";
+	info.cols="125";
+	info.value = "var geometry =  new THREE.Geometry(); // create a base geometry \n // or \nvar geometry =  new THREE.BufferGeometry(); // create a base buffer geometry \ngeometry.createMorphGeometry = THREEp.createMorphGeometry; // insert the method from THREEp\n\n// then apply the method with the appropriate parameters \ngeometry.createMorphGeometry({ \n\n// set the list of parameters from examples below\n\n});\n\n// use the parameter indexed: false, if you want a non-indexed BufferGeometry. \n"
+	
+	document.body.appendChild( document.createElement( "hr" ) );
+	
+	parameterList = [];
+ 	for ( var i = 0; i < 100; i ++){	
+		document.body.appendChild( document.createElement( "IMG" ) );
+		document.images[i].height = "160"; // standard, see instructions below
+		document.images[i].width  = "160"; // standard, see instructions below
+		parameterList[i] = document.body.appendChild( document.createElement( "textarea" ) );
+		parameterList[i].rows="10";
+		parameterList[i].cols="100";
+		document.body.appendChild( document.createElement( "hr" ) );
+	}	
+</script>
+
+<script>
+// Go to the end of this script and submit your form.
+// Follow the instructions there.
+//___________________________________________________________
+document.images[0].src = "img/0000_sphericalPiece.png";
+parameterList[0].value = "//0000 sphericalPiece  @author hofk \n  	bottom: 9,\n	withBottom: true,\n	usedWedges: 2";
+//___________________________________________________________
+document.images[1].src = "img/0001_squeezed4round.png";
+parameterList[1].value = "//0001 squeezed4round  @author hofk \n 	wedges: 16,\n	usedWedges: 15,\n	wedgeOpen: true,\n	squeeze: function( u, t ) { return 0.3 + 0.1 * ( 1 + Math.cos( 8 * Math.PI * u ) ) }";
+//___________________________________________________________
+document.images[2].width = "182";
+document.images[2].src = "img/0002_overlapped.png";
+parameterList[2].value = "//0002 overlapped (surface moved) @author hofk  - MOVED by parameter t - \n  	wedgeOpen: true,\n	startPole: function( u, t ) { return 0.2 * ( 1 + Math.sin( 25.12 * u + t ) ) },\n	endPole: function( u, t ) { return 0.6 + 0.4 * ( 1 + Math.sin( 25.12 * u ) ) }, \n	scalePoleH: function( v, t ) { return  v * v },\n	rAzimuthPole: function ( u, v, t ) { return v > 0.5 ? 1.1 : 1.0 } ";
+//___________________________________________________________
+document.images[3].src = "img/0003_scaledAzimuth.png";
+
+parameterList[3].value = "//0003 scaledAzimuth  @author hofk   - MOVED by parameter t - \n	startAzimuth: function( v, t ) { return 0.2 + 0.1 * ( 1 + Math.sin( v + 5 * t) ) }, \n	endAzimuth: function( v, t ) { return 0.9 + 0.1 * ( 1 + Math.cos( v + 5 * t) ) }, \n	scaleAzimuth: function( u, t ) { return  Math.sqrt( u ) } ";
+//___________________________________________________________
+document.images[ 4 ].src = "img/0004_constricted.png";
+parameterList[ 4 ].value = "//0004 constricted   @author hofk \n	usedWedges: 3,	\n	rAzimuthPole: function ( u, v, t ) { return v < 0.3 ? 0.75 + ( v - 0.5 ) * ( v - 0.5 ) : Math.sqrt( v ) }";
+//___________________________________________________________
+document.images[ 5 ].src = "img/0005_fish.png";
+parameterList[ 5 ].value = "//0005 fish @author hofk \n	moveX: function ( u, v, t ) { return 4 * v * v + Math.cos( 2 * Math.PI * u ) },\n	moveZ: function ( u, v, t ) { return u < 0.5 ? -0.2 : ( u > 0.5 ? 0.2 : 0 ) }";
+//___________________________________________________________
+document.images[ 6 ].src = "img/0006_duckling.png";
+parameterList[ 6 ].value = "//0006_duckling @author hofk \n	rAzimuthPole: function( u, v, t ) { return 0.25 + u * u + Math.sqrt(Math.abs( u - 0.5 )) },";
+//___________________________________________________________
+document.images[ 7 ].src = "img/0007_tooth.png";
+parameterList[ 7 ].value = "//0007 tooth @author hofk  \n	rAzimuthPole: function( u, v, t ) { return 1 / ( 1 + Math.exp( Math.sin( 2 * Math.PI * u ) + v ) ) }, \n	stretchNorth:function ( u, v, t ) { return 0.6 },\n	stretchSouth:function ( u, v, t ) { return 2 + Math.cos( 2 * Math.PI * u ) + v * v * Math.sin( 2 * Math.PI * v ) }";
+//___________________________________________________________
+document.images[ 8 ].src = "img/0008_bowTie.png";
+parameterList[ 8 ].value = "//0008 bowTie @author hofk  \n	equatorGap: function ( u, t ) { return 0.05}, \n	bottom: 7,\n	withBottom: true, \n	top: 12,\n	withTop: true,\n	rAzimuthPole: function( u, v, t ) { return 1.5 + Math.sin( 4 * Math.PI * u ) },";
+//___________________________________________________________
+document.images[ 9 ].src = "img/0009_thickLeaf.png";
+parameterList[ 9 ].value = "//0009 thickLeaf @author hofk  \n	scaleAzimuth: function ( u, t ) { return  u / 2 }, \n	rAzimuthPole: function( u, v, t ) { return  u * v }";
+//___________________________________________________________
+document.images[ 10 ].src = "img/0010_mushroom.png";
+parameterList[ 10 ].value = "//0010 mushroom @author hofk  \n	rAzimuthPole: function ( u, v, t ) { return  0.5 + 0.5 * ( 1 + Math.cos( 8 * v ) ) }, \n	squeeze: function ( u, t ) { return 0.6 },";
+//___________________________________________________________
+document.images[ 11 ].src = "img/0011_screwedIn.png";
+parameterList[ 11 ].value = "//0011 screwedIn @author hofk  \n	rAzimuthPole: function ( u, v, t ) { return  1.5 + Math.sin( -u ) * Math.cos( v ) },\n	endAzimuth:	function ( v, t ) { return 1.5  },		\n	startAzimuth:	function ( v, t ) { return -0.5 },\n	wedgeOpen: true,";
+//___________________________________________________________
+document.images[ 12 ].src = "img/0012_bird.png";
+parameterList[ 12 ].value = "//0012 bird @author hofk  \n	rAzimuthPole:	function ( u, v, t ) { return u < 0.5 ? Math.atan( 1.5 * u ) : Math.tan( 0.5 * u ) },\n	squeeze:	function ( u, t ) { return u },";
+//___________________________________________________________20_relief
+document.images[ 13 ].src = "img/0013_cutDahlia.png";
+parameterList[ 13 ].value = "//0013 cutDahlia @author hofk  \n	indexed: false,\n	explode: function ( t ) { return 0.1 },\n	wedgeOpen: true,	\n	equator: 6,	\n	top: 6,";
+//___________________________________________________________
+document.images[ 14 ].src = "img/0014_birdhead.png";
+parameterList[ 14 ].value = "//0014 birdhead @author hofk  \n	wedges: 10,\n	usedWedges: 5,\n	squeeze: function ( u, t ) { return  Math.exp( -8 * u ) },";
+//___________________________________________________________
+document.images[ 15 ].src = "img/0015_clamshell.png";
+parameterList[ 15 ].value = "//0015_clamshell @author hofk  \n	wedgeOpen: true,	\n	rAzimuthPole: function ( u, v, t ) { return Math.exp( -6 * u ) },";
+//___________________________________________________________
+document.images[ 16 ].src = "img/0016_smalToBig.png";
+parameterList[ 16 ].value = "//0016 smalToBig @author hofk  \n	rAzimuthPole: function( u, v, t ) { return ( Math.sin( u )+ Math.sqrt( v ) * Math.sin( Math.PI * v * v ) ) },";
+//___________________________________________________________
+document.images[ 17 ].src = "img/0017_flatToHigh.png";
+parameterList[ 17 ].value = "//0017 flatToHigh @author hofk  \n	squeeze: function( u, t ) { return Math.sin( 2 * Math.PI * u ) },";
+//___________________________________________________________
+document.images[ 18 ].src = "img/0018_scalePole.png";
+parameterList[ 18 ].value = "//0018 scalePole @author hofk  \n	scalePole: function( v, t ) { return Math.sqrt( v ) },";
+//___________________________________________________________
+document.images[ 19 ].src = "img/0019_scalePoleHemisph.png";
+parameterList[ 19 ].value = "//0019 scalePoleHemisph @author hofk  \n	scalePoleH: function( v, t ) { return Math.sqrt( v ) },";
+//___________________________________________________________
+document.images[20].width = "320";
+document.images[ 20 ].src = "img/0020_relief.png";
+parameterList[ 20 ].value = "//0020 relief @author hofk   - MOVED by parameter t -  \n	wedges: 5,\n	usedWedges: 4,\n	equator: 5,\n	squeeze: function( u, t ) { return 0.45 * ( 1 + Math.sin( 0.5 * t ) ) },\n	rAzimuthPole: function ( u, v, t ) { return 0.75 + 2 * ( 0.5 - v ) * ( 0.5 - v ) + 0.2 * Math.sin( 6.28 * u ) },\n	stretchNorth: function ( u, v, t ) { return 1 + 0.4 * u },";
+//___________________________________________________________
+document.images[ 21 ].src = "img/0021_superscaled.png";
+parameterList[ 21 ].value = "//0021 superscaled @author hofk  \n	scalePole: function( v, t ) { return v * v * v },";
+//___________________________________________________________
+document.images[ 22 ].src = "img/    .png";
+parameterList[ 22 ].value = "//0...Here is the right place for your example! \n ";
+//__________________________________________________________
+  // +++++ Do not destroy the following instructions. +++++ 
+  //
+  // Copy the last section, increase the indices and then describe your form in the penultimate section.
+  // Set the number nnnn, a description and your author tag, possibly with URL.
+  // If you copy the list of parameters into the string, replace the line break with \n
+  // Copy your image to the img directory and use the pattern from above (fourDigits_name.type) for the name.
+  // Take png (or jpg) images up to approximately 100KByte.
+  //
+  // If the image is not square, change the height or width in your section:
+  // document.images [index].width = "value" or document.images [index].height = "value"
+  // See examples, standard is 160 x 160.
+  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+</script>
+</html>

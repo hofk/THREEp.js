@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--   *** basic examples r90.0 ***
+/**
+ * @author hofk / http://sandbox.threejs.hofk.de/
+*/
+-->
+<html lang="de">
+
+<head>
+	<title> THREEf basic examples  </title>
+	<meta charset="utf-8" />
+</head>
+
+<body> 	
+	examples from left: Geometry, indexed & non-indexed BufferGeometry  -  source code ctrl + U  -
+	
+	 <a href="examplesTHREEp r90.html" title="examples" target="_blank"> further examples  </a> 
+	
+</body>
+
+	<script src="three.min.90.js"></script>
+	<script src="OrbitControls.js"></script>
+	<script src="THREEx.WindowResize.js"></script>
+	<script src="THREEp.js"></script>
+	
+<script>
+
+'use strict'
+
+var scene = new THREE.Scene();
+
+var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 20000 );
+camera.position.set( -10, 50, 180 );
+
+var renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0xdddddd, 1 );	
+
+var container = document.createElement( 'div' );
+document.body.appendChild( container );
+container.appendChild( renderer.domElement ); 
+
+THREEx.WindowResize( renderer, camera );
+var controls = new THREE.OrbitControls( camera, renderer.domElement );
+controls.enableZoom = true;
+
+var clock  = new THREE.Clock( true );	
+var time;	// for animate .morphVertices( time ) and .morphFaces( time ) )
+
+// material
+var uvTex		= new THREE.TextureLoader().load( "uvgrid01.png" );			
+var dahliaTex	= new THREE.TextureLoader().load( "dahlia.png" );	
+var side =  THREE.DoubleSide;
+
+var materials = [
+																						// material index:
+    new THREE.MeshBasicMaterial( { transparent: true, opacity: 0.15, 	side: side	} ),	//  0 transparent
+	new THREE.MeshBasicMaterial( { map: uvTex, 							side: side	} ),	//  1 uv grid
+	new THREE.MeshPhongMaterial( { color: 0xff0000, emissive: 0xff0000, side: side, } ),	//  2 red
+	new THREE.MeshPhongMaterial( { color: 0x00ff00, emissive: 0x00ff00, side: side, } ),	//  3 green
+	new THREE.MeshPhongMaterial( { color: 0x0000ff, emissive: 0x0000ff, side: side, } ),	//  4 blue
+	new THREE.MeshPhongMaterial( { color: 0xffff00, emissive: 0xffff00, side: side, } ),	//  5 yellow
+	new THREE.MeshPhongMaterial( { color: 0xff00ff, emissive: 0xff00ff, side: side, } ),	//  6 mgenta
+	new THREE.MeshPhongMaterial( { color: 0x00ffff, emissive: 0x00ffff, side: side, } ),	//  7 cyan	
+	new THREE.MeshBasicMaterial( { map: dahliaTex,						side: side	} ),	//  8 photo dahlia (free)
+	new THREE.MeshPhongMaterial( { color: 0x7755ff, emissive: 0x4433dd, side: side	} ),	//  9 color
+	new THREE.MeshPhongMaterial( { color: 0x444444, emissive: 0x333333, side: side	} )		// 10 grey
+	
+];
+
+var light1 = new THREE.DirectionalLight();
+light1.intensity =  0.6;  
+light1.position.set(50, 200, 300);
+scene.add(light1);
+
+var light2 = new THREE.DirectionalLight();
+light2.intensity =  0.5;  
+light2.position.set(-50, -200, 300);
+scene.add(light2);
+
+/*
+
+//  *** aviable parameters ***
+
+indexed: true,
+radius: ,
+wedges: 6,
+usedWedges: ,
+wedgeOpen: false,
+equator: ,
+bottom: ,
+top: ,
+withTop: false,
+withBottom: false,
+style: 'complete',
+explodemode: 'center',
+endPole:			function ( u, t ) { return  },
+startPole:			function ( u, t ) { return  },
+stretchSouth:		function ( u, v, t ) { return  },
+stretchNorth:		function ( u, v, t ) { return  },
+scalePoleH:			function ( v, t ) { return  },
+scalePole:			function ( v, t ) { return  },
+rAzimuthPole:		unction ( u, v, t ) { return  },
+equatorGap:			function ( u, t ) { return  },
+squeeze:			function ( u, t ) { return  },
+moveX:				function ( u, v, t ) { return  },
+moveY:				function ( u, v, t ) { return  },
+moveZ:				function ( u, v, t ) { return  },
+explode:			function ( t ) { return  },
+endAzimuth:			function ( v, t ) { return  },
+startAzimuth:		function ( v, t ) { return  },
+scaleAzimuth:		function ( u, t ) { return  },
+g.materialSouth:	function() { return },
+g.materialNorth:	function() { return },
+g.materialPlane:	function() { return },
+g.materialWedge:	function() { return },
+
+fixedMaterial: [ '222222555555', 'equator', '222222777777' ],	// example
+*/
+
+var parameters = { 
+
+	wedges: 12,	
+	wedgeOpen: true,
+	squeeze: function( u, t ) { return 0.3 *( 1 + Math.cos( t ) * ( 1 + Math.cos( 8 * Math.PI * u ) ) ) },
+	startPole: function( u, t ) { return 0.2 * ( 1 + Math.sin( 25.12 * u + t ) ) },
+	endPole: function( u, t ) { return 0.6 + 0.4 * ( 1 + Math.sin( 25.12 * u ) ) }, 
+	scalePoleH: function( v, t ) { return  v * v },
+	rAzimuthPole: function ( u, v, t ) { return v > 0.5 ? 1.1 : 1.0 }, 
+	materialSouth: function( u, v, t ) { return 0.8 },	// not time dependent
+	materialNorth: function( u, v, t ) { return 0.8 },	// not time dependent
+	
+ }
+
+var geometry =  new THREE.Geometry();
+geometry.createMorphGeometry = THREEp.createMorphGeometry;
+geometry.createMorphGeometry( parameters );
+
+var indexedBufferGeometry = new THREE.BufferGeometry();
+indexedBufferGeometry.createMorphGeometry = THREEp.createMorphGeometry;
+indexedBufferGeometry.createMorphGeometry( parameters );
+
+var nonIndexedBufferGeometry = new THREE.BufferGeometry();
+nonIndexedBufferGeometry.createMorphGeometry = THREEp.createMorphGeometry;
+parameters.indexed = false;
+nonIndexedBufferGeometry.createMorphGeometry( parameters );
+
+// meshes
+var mesh1 = new THREE.Mesh( geometry, materials );
+var mesh2 = new THREE.Mesh( indexedBufferGeometry , materials );
+var mesh3 = new THREE.Mesh( nonIndexedBufferGeometry, materials );
+
+scene.add( mesh1 );
+scene.add( mesh2 );
+scene.add( mesh3 );
+
+mesh1.position.set( -60, 0, 0 );
+mesh2.position.set( 0, 0, -60 );
+mesh3.position.set( 60, 0, 0 );
+
+animate();
+
+//..................
+
+function animate() {
+
+	requestAnimationFrame( animate );
+	
+	time = clock.getElapsedTime();
+	
+	geometry.morphVertices( time );	
+	indexedBufferGeometry.morphVertices( time );
+	nonIndexedBufferGeometry.morphVertices( time );
+	
+	/*	only necessary if face material depends on time
+	
+ 	geometry.morphFaces( time );
+	indexedBufferGeometry.morphFaces( time );
+	nonIndexedBufferGeometry.morphFaces( time );
+	
+	*/
+	
+	mesh1.rotation.y = time;
+	mesh2.rotation.y = time;
+	mesh3.rotation.y = time;
+	
+	renderer.render( scene, camera );
+	controls.update();
+	
+}
+
+</script>
+
+</html>
