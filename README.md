@@ -34,11 +34,12 @@ scene.add( mesh );
 Include: <script src="THREEp.js"></script>
 
 ---
-_90 now contains
+
+ _90 now contains
 explodemode,	// 'center','normal'
+
 ---
 
------------------------------------------------------------------------------------------------------------------
 
 **Example:**
 
