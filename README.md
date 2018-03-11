@@ -13,7 +13,7 @@ see also https://discourse.threejs.org/t/addon-produces-almost-infinite-many-tim
 
 //
 
-Produce almost infinite many time-varying Geometries or BufferGeometries with only 11 properties, 20 functions and 1 array:
+Produce almost infinite many time-varying Geometries or BufferGeometries with only 12 properties, 20 functions and 1 array:
 
 ```javascript
 geometry = new THREE.Geometry();    // base class geometry object from three.js
@@ -33,7 +33,13 @@ scene.add( mesh );
     
 Include: <script src="THREEp.js"></script>
 
------------------------------------------------------------------------------------------------------------------
+---
+
+ _90 now contains
+explodemode,	// 'center','normal'
+
+---
+
 
 **Example:**
 
@@ -73,7 +79,8 @@ p = {
 	top,		// max. equator * 2 (is north pole)
 	withBottom,	// with a bottom (bottom > 0)
 	withTop,	// with a top (top < equator * 2)
-	style,		// 'map', 'relief', 'complete'
+	style,		// 'complete', 'relief', 'map'
+	explodemode,	// 'center', 'normal'	- only non-indexed BufferGeometry
 	
 		// functions: u,v and result normally 0 .. 1, otherwise specific / interesting results!
 		// u azimuth (start: x axis, counterclockwise)
