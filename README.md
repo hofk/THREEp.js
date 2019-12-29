@@ -5,6 +5,8 @@ three.js addon, to produce almost infinite many time-varying Geometries and Buff
 In contrast to THREEf.js, polar / spherical coordinates are used here for the functions.
 This results in a different set of properties and functions.
 
+*License identical to three.js*
+
 //
 
 @author hofk / http://sandbox.threejs.hofk.de/
