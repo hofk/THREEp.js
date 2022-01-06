@@ -40,8 +40,6 @@ Include: <script src="THREEp.js"></script>
  _90 now contains
 explodemode,	// 'center','normal'
 
-Replace from revision 110 .addAttribute with .setAttribute.
-
 ---
 
 
