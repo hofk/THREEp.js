@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<!--   *** examples THREEp.module ***
+/**
+ * @author hofk / http://sandbox.threejs.hofk.de/
+*/
+-->
+<head>
+	<title>  examples THREEp.module  </title>
+	<meta charset="utf-8" />
+</head> 
+
+<body> </body>
+ 
+<script type="module">
+
+import { Scene, PerspectiveCamera,  WebGLRenderer, TextureLoader, PointLight, Clock, DoubleSide, BufferGeometry, Mesh, MeshBasicMaterial, MeshPhongMaterial } from '../jsm/three.module.147.js';
+import { OrbitControls} from '../jsm/OrbitControls.147.js';
+
+import { createMorphGeometry, create, morphVertices, morphFaces } from './THREEp.module.js';
+
+const scene = new Scene();
+
+const camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 20000 );
+camera.position.set( 0, 80, 250 );
+
+const renderer = new WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0xdddddd, 1 );	
+
+const container = document.createElement( 'div' );
+document.body.appendChild( container );
+container.appendChild( renderer.domElement ); 
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.enableZoom = true;
+
+const light1 = new PointLight( 0xffffff, 1, 0 );
+light1.position.set( -50, 200, -700 ); 	
+scene.add( light1 ); 
+const light2 = new PointLight( 0xffffff, 1, 0 );
+light2.position.set( 50, -50, 200 ); 	
+scene.add( light2 ); 
+
+const clock  = new Clock( true );	
+let time;	// for animate .morphVertices( time ) and .morphFaces( time ) )
+
+// material
+const uvTex			= new TextureLoader().load( "uvgrid01.png" );			
+const dahliaTex	= new TextureLoader().load( "dahlia.png" );	
+const side = DoubleSide;
+
+const materials = [																			// material index:
+	new MeshBasicMaterial( { transparent: true, opacity: 0.15, 	side: side	} ),	//  0 transparent
+	new MeshBasicMaterial( { map: uvTex, 							side: side	} ),	//  1 uv grid
+	new MeshPhongMaterial( { color: 0xff0000, emissive: 0xff0000, side: side	} ),	//  2 red
+	new MeshPhongMaterial( { color: 0x00ff00, emissive: 0x00ff00, side: side	} ),	//  3 green
+	new MeshPhongMaterial( { color: 0x0000ff, emissive: 0x0000ff, side: side	} ),	//  4 blue
+	new MeshPhongMaterial( { color: 0xffff00, emissive: 0xffff00, side: side	} ),	//  5 yellow
+	new MeshPhongMaterial( { color: 0xff00ff, emissive: 0xff00ff, side: side	} ),	//  6 mgenta
+	new MeshPhongMaterial( { color: 0x00ffff, emissive: 0x00ffff, side: side	} ),	//  7 cyan	
+	new MeshBasicMaterial( { map: dahliaTex,						side: side	} ),	//  8 photo dahlia (free)
+	new MeshPhongMaterial( { color: 0x7755ff, emissive: 0x4433dd, side: side	} ),	//  9 color
+	new MeshPhongMaterial( { color: 0x444444, emissive: 0x333333, side: side	} )		// 10 grey
+];
+
+//  BufferGeometry (indexed, non indexed)
+
+const geometry01 =  new BufferGeometry();	//  --- Base class for building custom BufferGeometries in three.js --- 
+geometry01.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+geometry01.createMorphGeometry();		// apply the methode ( without parameters: all default )
+
+
+const geometry02 =  new BufferGeometry();	//  --- Base class for building custom BufferGeometries in three.js --- 
+geometry02.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry02.createMorphGeometry({ 
+	
+	wedges: 4,
+	usedWedges: 3,
+	wedgeOpen: true,
+	equator: 3,
+	top: 3,
+	materialSouth:	function ( u, v, t ) { return  ( u / 2 + v ) *  Math.cos( 0.2 * t  ) * Math.cos( 0.2 * t ) },
+
+});		
+
+var geometry03 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js --- 
+geometry03.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+var differentFaces = ['8','33','..44','','..55555555','6666..6666','8888888888888888','8888888888888888'];
+// apply the methode with some parameters
+geometry03.createMorphGeometry({ 
+	
+	radius: 30,
+	wedges: 3,
+	usedWedges: 1,
+	bottom: 9,
+	fixedMaterial: differentFaces,
+	
+ 
+});	
+
+var geometry04 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js --- 
+geometry04.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry04.createMorphGeometry({
+
+// birdhead
+	wedges: 10,
+	usedWedges: 5,
+	squeeze: function ( u, t ) { return  Math.exp( -8 * u ) },
+	
+		
+});	
+
+var geometry05 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js --- 
+geometry05.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry05.createMorphGeometry({
+	
+	//clamshell
+	radius: 30,
+	wedgeOpen: true,	
+	rAzimuthPole: function ( u, v, t ) { return Math.exp( -6 * u ) },
+
+	
+});	
+
+var geometry06 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js --- 
+geometry06.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry06.createMorphGeometry({
+	
+	// squeezed4round
+ 	wedges: 16,
+	usedWedges: 15,
+	wedgeOpen: true,
+	squeeze: function( u, t ) { return 0.3 + 0.1 * ( 1 + Math.cos( 8 * Math.PI * u ) ) },
+	materialSouth: function ( u, v, t ) { return 0.8 },
+	materialNorth: function ( u, v, t ) { return 0.8 },
+	
+});	
+
+var geometry07 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js --- 
+geometry07.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry07.createMorphGeometry({
+	
+	radius: 25,
+	wedges: 4,
+	usedWedges: 2,
+	top: 9,
+	rAzimuthPole: function ( u, v, t ) { return 0.6 + 0.4 *( 1 + Math.sin( 12 * Math.PI * v + t ) ) },
+	materialSouth: function ( u, v, t ) { return 0.8 },
+	materialWedge: function ( u, v, t ) { return 0.2 },
+	
+});	
+
+var geometry08 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js ---  
+geometry08.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry08.createMorphGeometry({
+
+	indexed:	false, // non-indexed BufferGeometry
+	wedgeOpen:	true,
+	wedges: 3,
+	equator: 4,
+	top: 4,
+	explode: 	function ( t ) { return 0.4 *( 1 +  Math.sin( 0.8 * t ) ) }, 
+	
+
+});	
+
+var geometry09 = new BufferGeometry();   //  --- Base class for building custom BufferGeometries in three.js --- 
+geometry09.createMorphGeometry = createMorphGeometry;  // insert the methode from THREEp.module.js
+// apply the methode with some parameters
+geometry09.createMorphGeometry({
+
+	wedgeOpen:	true,
+	equator: 16,
+	stretchNorth: function ( u, v, t ) { return  0.05 * ( 1 + Math.cos( 8 * Math.PI * v + t ) ) },
+	stretchSouth: function ( u, v, t ) { return  0.25 * ( 1 + Math.sin( t ) ) },
+	
+});	
+
+
+// meshes
+
+const mesh01 = new Mesh( geometry01, materials );
+scene.add( mesh01 );
+mesh01.position.set( 0, 0, 80 );
+
+const mesh02 = new Mesh( geometry02, materials );
+scene.add( mesh02 );
+mesh02.position.set( -100, 0, 0 );
+ 
+
+var mesh03 = new Mesh( geometry03, materials );
+scene.add( mesh03 );
+mesh03.position.set( 0, 25, -100 );
+mesh03.rotation.y = 0.7;
+
+var mesh04 = new Mesh( geometry04, materials );
+scene.add( mesh04 );
+mesh04.position.set( 100, 0, 0 );
+mesh04.rotation.set( 0, 1.57, -1.57 );	
+
+var mesh05 = new Mesh( geometry05, materials );
+scene.add( mesh05 );
+mesh05.position.set( 100, 25, -100 );
+mesh05.rotation.set( -0.7 , 0.7, 1.3 );
+
+var mesh06 = new Mesh( geometry06, materials );
+scene.add( mesh06 );
+
+var mesh07 = new Mesh( geometry07, materials );
+scene.add( mesh07 );
+mesh07.position.set( -100, 25, -100 );
+
+var mesh08 = new Mesh( geometry08, materials );
+scene.add( mesh08 );
+mesh08.position.set( -80, 0, 100 );
+
+var mesh09 = new Mesh( geometry09, materials );
+scene.add( mesh09 );
+mesh09.position.set( 80, 0, 100 );
+
+animate();
+
+//..................
+
+function animate() {
+
+	requestAnimationFrame( animate );
+	
+	time = clock.getElapsedTime();
+			
+	geometry01.morphVertices( time ); // only if needed, function ( .., t )
+    
+	geometry02.morphVertices( time );	// only if needed, definition of function ( .., t )		
+	geometry02.morphFaces( time );		// for materialSouth:	function ( u, v, t )
+    
+	mesh02.rotation.y = 0.1 * time;		// standard THREE mesh methode
+	
+	// geometry03.morphVertices( time );	// only if needed, function ( .., t )		
+	// geometry03.morphFaces();			// no morph faces while animate
+		
+	// geometry04.morphVertices( time );			
+	// geometry04.morphFaces( time );	
+		
+	//geometry05.morphVertices( time );			
+	// geometry05.morphFaces();			
+	
+	// geometry06.morphVertices( time );		
+	// geometry06.morphFaces();			
+	
+	geometry07.morphVertices( time );			
+	// geometry07.morphFaces( time );	// no morph faces while animate	
+	
+	geometry08.morphVertices( time );
+	// geometry08.morphFaces();			
+	
+	geometry09.morphVertices( time );
+	// geometry09.morphFaces();			
+    
+	renderer.render( scene, camera );
+	controls.update();
+	
+}
+</script>
+
+</html>
